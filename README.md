@@ -1,9 +1,10 @@
-# Program Title (replace)
-Program description. Replace with description of your program. Give a description of each scene.
+# StormPlane X SMC
+The StormPlane is a simple and addicting aircraft shooting game where you play the role of a brave and daring fighter pilot. Dodge and weave your way around a war zone as you try to avoid enemy fire from all angles to survive. Destroy as many enemy aircraft as you can in this adventure to get higher scores. Your final goal of this game is to get through all the levels and score as many points as possible. Good luck brave Fighter Pilot!
 
 ### Group Members:
-- Member1
-- Member2
+- Charlie Guo
+- Simon Li
+- Yingchen Ma
 
 
 # CPT 2019
