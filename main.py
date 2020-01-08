@@ -27,7 +27,7 @@ class Director(arcade.Window):
 
 
 def main():
-    window = Director(settings.WIDTH, settings.HEIGHT, "CPT Structure")
+    window = Director(settings.WIDTH, settings.HEIGHT, "Storm Plane")
     arcade.run()
 
 
