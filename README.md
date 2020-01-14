@@ -1,5 +1,12 @@
-# StormPlane X SMC
-The StormPlane is a simple and addicting aircraft shooting game where you play the role of a brave and daring fighter pilot. Dodge and weave your way around a war zone as you try to avoid enemy fire from all angles to survive. Destroy as many enemy aircraft as you can in this adventure to get higher scores. Your final goal of this game is to get through all the levels and score as many points as possible. Good luck brave Fighter Pilot!
+# WEFLY X SMC
+The StormPlane is a simple and addicting aircraft shooting game where you play the role of a brave and daring fighter pilot. 
+Dodge and weave your way around a war zone as you try to avoid enemy fire from all angles to survive. 
+Destroy as many enemy aircraft as you can in this adventure to get higher scores. 
+Your final goal of this game is to get through all the levels and score as many points as possible. 
+Good luck brave Fighter Pilot!
+
+## LATEST FEATURE
+OpenCV + NumPy + Recursion + Auto-Tracking Missile + Levels + AutoPilot
 
 ### Group Members:
 - Charlie Guo
@@ -7,7 +14,7 @@ The StormPlane is a simple and addicting aircraft shooting game where you play t
 - Yingchen Ma
 
 
-# CPT 2019
+# CPT 2019-2020
 This repository will serve as a starting point for your project. Do not alter the structure without approval from Mr. Gallo.
 
 Using [Arcade](https://arcade.academy)
