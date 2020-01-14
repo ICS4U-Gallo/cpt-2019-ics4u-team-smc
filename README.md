@@ -1,5 +1,5 @@
 # WEFLY X SMC
-The StormPlane is a simple and addicting aircraft shooting game where you play the role of a brave and daring fighter pilot. 
+Wefly is a simple and addicting aircraft shooting game where you play the role of a brave and daring fighter pilot. 
 Dodge and weave your way around a war zone as you try to avoid enemy fire from all angles to survive. 
 Destroy as many enemy aircraft as you can in this adventure to get higher scores. 
 Your final goal of this game is to get through all the levels and score as many points as possible. 
