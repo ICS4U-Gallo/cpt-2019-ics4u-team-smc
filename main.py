@@ -4,6 +4,7 @@ import settings
 
 from menu import MenuView
 from chapter_1 import Chapter1View
+from chapter_1_charlieguo import MyGame
 from chapter_2 import Chapter2View
 from chapter_3 import Chapter3View
 
@@ -27,7 +28,7 @@ class Director(arcade.Window):
 
 
 def main():
-    window = Director(settings.WIDTH, settings.HEIGHT, "Storm Plane")
+    window = Director(settings.WIDTH, settings.HEIGHT, "WeFly X Charlie")
     arcade.run()
 
 

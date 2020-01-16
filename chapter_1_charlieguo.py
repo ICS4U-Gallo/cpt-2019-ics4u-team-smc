@@ -4,6 +4,7 @@ import random
 from typing import Tuple, List, Dict
 import multiprocessing
 import json
+import settings
 
 # default window
 SCREEN_WIDTH = 800
@@ -131,6 +132,32 @@ class Enemy(arcade.Sprite):
     """
     enemies: List["Enemy"] = []
 
+    def __init__(self, image: str, scale: float, ehp: float, score: int, speed: float):
+        """ Initialize an enemy with information passed in.
+
+        Args:
+            image: enemy image
+            scale: enemy scale
+            ehp: enemy hit points
+            score: kill enemy score
+            speed: enemy speed
+        """
+        arcade.Sprite.__init__(self, image, scale)
+        self.ehp = ehp
+        self.score = score
+        self.speed = speed
+        self.number = Enemy.count_enemy()
+        Enemy.enemies.append(self)
+
+        self.path_type = "BSpline"
+
+    # TODO
+    # self.max_point = 1000
+    # self.current_point = 0
+    # self.path_points = [(400, -20), (200, 200), (400, 400), (600, 600), (400, 800), (200, 600),
+    #                     (400, 400), (600, 200), (200, -200)]
+
+
     @classmethod
     def count_enemy(cls) -> int:
         """ a class method that counts enemies
@@ -152,31 +179,6 @@ class Enemy(arcade.Sprite):
             None
         """
         cls.enemies = []
-
-    def __init__(self, image: str, scale: float, ehp: float, score: int, speed: float):
-        """ Initialize an enemy with information passed in.
-
-        Args:
-            image: enemy image
-            scale: enemy scale
-            ehp: enemy hit points
-            score: kill enemy score
-            speed: enemy speed
-        """
-        arcade.Sprite.__init__(self, image, scale)
-        self.ehp = ehp
-        self.score = score
-        self.speed = speed
-        self.number = Enemy.count_enemy()
-        Enemy.enemies.append(self)
-
-        self.path_type = "BSpline"
-# TODO
-        # self.max_point = 1000
-        # self.current_point = 0
-        # self.path_points = [(400, -20), (200, 200), (400, 400), (600, 600), (400, 800), (200, 600),
-        #                     (400, 400), (600, 200), (200, -200)]
-
 
 #TODO
     def pascal(self, n):
@@ -300,7 +302,7 @@ class Boss(Enemy):
         return (0, 0, 0)
 
 
-class MyGame(arcade.Window):
+class MyGame(arcade.View):
     """ Create a main application class (Inherit from arcade.Window class)
 
     Attributes:
@@ -310,8 +312,47 @@ class MyGame(arcade.Window):
         frame_count (int): Frame recorder
         hp (float): Airplane health point
         boss (bool): Boss state
-# TODO
+        laser_player (int): Number of laser
     """
+
+    def __init__(self):
+        # arcade.window: width: int, height: int, title: str
+        """ Initialize the game window
+
+        Args:
+            width: Window width
+            height: Window height
+            title: Window title
+        """
+        super().__init__()
+
+        self.frame_count = 0
+        self.hp = 100
+        self.boss = False
+        self.laser_player = 0
+
+        self.enemy_list: List[Enemy] = None
+        self.bullet_list = None
+        self.bullet_pet_list = None
+        self.bullet_self_list = None
+        self.player_list = None
+        self.player = None
+        self.pet_list = None
+        self.pet = None
+        self.pet2 = None
+        self.assist = None
+        self.bonus = None
+
+        self.instructions = []
+        texture = arcade.load_texture("images/fm.jpeg")
+        self.instructions.append(texture)
+        texture = arcade.load_texture("images/intro.jpeg")
+        self.instructions.append(texture)
+        texture = arcade.load_texture("images/new_leaderboard.png")
+        self.instructions.append(texture)
+
+        self.current_state = INSTRUCTIONS_PAGE_0
+
     @staticmethod
     def msort(l: List[int]) -> List[int]:
         """ A helper function that sort the data in an ascending order
@@ -392,43 +433,6 @@ class MyGame(arcade.Window):
         return MyGame.sort_enemy([ele for ele in enemy_list[1:] if ele.ehp >= enemy_list[0].ehp]) + [
             enemy_list[0]] + MyGame.sort_enemy(
             [ele for ele in enemy_list[1:] if ele.ehp < enemy_list[0].ehp])
-
-    def __init__(self, width: int, height: int, title: str):
-        """ Initialize the game window
-
-        Args:
-            width: Window width
-            height: Window height
-            title: Window title
-        """
-        super().__init__(width, height, title)
-
-        self.frame_count = 0
-        self.hp = 100
-        self.boss = False
-        self.laser_player = 0
-
-        self.enemy_list = None
-        self.bullet_list = None
-        self.bullet_pet_list = None
-        self.bullet_self_list = None
-        self.player_list = None
-        self.player = None
-        self.pet_list = None
-        self.pet = None
-        self.pet2 = None
-        self.assist = None
-        self.bonus = None
-
-        self.instructions = []
-        texture = arcade.load_texture("images/fm.jpeg")
-        self.instructions.append(texture)
-        texture = arcade.load_texture("images/intro.jpeg")
-        self.instructions.append(texture)
-        texture = arcade.load_texture("images/new_leaderboard.png")
-        self.instructions.append(texture)
-
-        self.current_state = INSTRUCTIONS_PAGE_0
 
     # draw instruction page METHOD???
     def draw_instructions_page(self, page_number: int) -> None:
@@ -558,7 +562,7 @@ class MyGame(arcade.Window):
         Returns:
             None
         """
-        with open("Leaderboard.json", "r") as f:
+        with open("leaderboard.json", "r") as f:
             prim_data = json.load(f)
 
         data = MyGame.sorted_data(prim_data)
@@ -705,13 +709,15 @@ class MyGame(arcade.Window):
 
         if self.current_state != GAME_RUNNING and self.frame_count % 3480 == 0:
             try:
-                arcade.play_sound(background_sound)
+                pass
+                # arcade.play_sound(background_sound)
             except Exception as e:
                 print("Error playing sound.", e)
 
         if self.current_state == GAME_RUNNING:
             try:
-                background_sound.pause()
+                pass
+                # background_sound.pause()
             except Exception as e:
                 print("Error pausing sound.", e)
 
@@ -720,63 +726,66 @@ class MyGame(arcade.Window):
             return
         if self.current_state == GAME_RUNNING:
 
-            if self.boss and boss_sound_on == 0:
-                boss_sound_on = 1
-                try:
-                    if level == 0:
-                        game_sound.pause()
-                        arcade.play_sound(boss_sound_1)
-                    if level == 1:
-                        game_sound_1.pause()
-                        arcade.play_sound(boss_sound_2)
-                    if level == 2:
-                        game_sound_2.pause()
-                        arcade.play_sound(boss_sound_3)
-                    if level == 3:
-                        game_sound_3.pause()
-                        arcade.play_sound(boss_sound_4)
-                    if level == 4:
-                        game_sound_4.pause()
-                        arcade.play_sound(boss_sound_5)
-                except Exception as e:
-                    print("Error pausing sound.", e)
+            # if self.boss and boss_sound_on == 0:
+            #     boss_sound_on = 1
+            #     try:
+            #         pass
+            #         if level == 0:
+            #             game_sound.pause()
+            #             arcade.play_sound(boss_sound_1)
+            #         if level == 1:
+            #             game_sound_1.pause()
+            #             arcade.play_sound(boss_sound_2)
+            #         if level == 2:
+            #             game_sound_2.pause()
+            #             arcade.play_sound(boss_sound_3)
+            #         if level == 3:
+            #             game_sound_3.pause()
+            #             arcade.play_sound(boss_sound_4)
+            #         if level == 4:
+            #             game_sound_4.pause()
+            #             arcade.play_sound(boss_sound_5)
+            #     except Exception as e:
+            #         print("Error pausing sound.", e)
 
-            if not self.boss:
-                try:
-                    if level == 0:
-                        boss_sound_1.pause()
-                    if level == 1:
-                        boss_sound_2.pause()
-                    if level == 2:
-                        boss_sound_3.pause()
-                    if level == 3:
-                        boss_sound_4.pause()
-                    if level == 4:
-                        boss_sound_5.pause()
-
-                except Exception as e:
-                    print("Error pausing sound.", e)
-
-                boss_sound_on = 0
+            # if not self.boss:
+            #     try:
+            #         pass
+            #         # if level == 0:
+            #         #     boss_sound_1.pause()
+            #         # if level == 1:
+            #         #     boss_sound_2.pause()
+            #         # if level == 2:
+            #         #     boss_sound_3.pause()
+            #         # if level == 3:
+            #         #     boss_sound_4.pause()
+            #         # if level == 4:
+            #         #     boss_sound_5.pause()
+            #
+            #     except Exception as e:
+            #         print("Error pausing sound.", e)
+            #
+            #     boss_sound_on = 0
                 # if (self.frame_count - fps) == 180 and fps != 0:
                 #     game_sound_on = 0
 
-            if game_sound_on == 0:
-                try:
-                    if level == 0:
-                        arcade.play_sound(game_sound)
-                    if level == 1:
-                        arcade.play_sound(game_sound_1)
-                    if level == 2:
-                        arcade.play_sound(game_sound_2)
-                    if level == 3:
-                        arcade.play_sound(game_sound_3)
-                    if level == 4:
-                        arcade.play_sound(game_sound_4)
-
-                except Exception as e:
-                    print("Error playing sound.", e)
-                game_sound_on = 1
+            # if game_sound_on == 0:
+            #     try:
+            #         pass
+            #         # if level == 0:
+            #         #     arcade.play_sound(game_sound)
+            #         # if level == 1:
+            #         #     arcade.play_sound(game_sound_1)
+            #         # if level == 2:
+            #         #     arcade.play_sound(game_sound_2)
+            #         # if level == 3:
+            #         #     arcade.play_sound(game_sound_3)
+            #         # if level == 4:
+            #         #     arcade.play_sound(game_sound_4)
+            #
+            #     except Exception as e:
+            #         print("Error playing sound.", e)
+            #     game_sound_on = 1
 
             # update remaining laser based on current score
             laser_counter = Score // 2000 + 1
@@ -786,22 +795,23 @@ class MyGame(arcade.Window):
                 laser_counter_update -= 1
 
             if self.hp <= 0:
-                game_sound_on = 10
-                try:
-                    game_sound.pause()
-                    game_sound_1.pause()
-                    game_sound_2.pause()
-                    game_sound_3.pause()
-                    game_sound_4.pause()
-
-                    boss_sound_1.pause()
-                    boss_sound_2.pause()
-                    boss_sound_3.pause()
-                    boss_sound_4.pause()
-                    boss_sound_5.pause()
-
-                except Exception as e:
-                    print("Error pausing sound.", e)
+                # game_sound_on = 10
+                # try:
+                #     pass
+                #     # game_sound.pause()
+                #     # game_sound_1.pause()
+                #     # game_sound_2.pause()
+                #     # game_sound_3.pause()
+                #     # game_sound_4.pause()
+                #     #
+                #     # boss_sound_1.pause()
+                #     # boss_sound_2.pause()
+                #     # boss_sound_3.pause()
+                #     # boss_sound_4.pause()
+                #     # boss_sound_5.pause()
+                #
+                # except Exception as e:
+                #     print("Error pausing sound.", e)
 
                 self.dead()
 
@@ -964,8 +974,8 @@ class MyGame(arcade.Window):
                 elif explode == 4 and self.frame_count - fps == 180:
                     explode += 1
                     level += 1
-                    bomb_sound.pause()
-                    game_sound_on = 0
+                    # bomb_sound.pause()
+                    # game_sound_on = 0
 
                 # use loop to make all enemies facing to the player
                 for enemy in self.enemy_list:
@@ -1362,13 +1372,30 @@ down_pressed = False
 left_pressed = False
 right_pressed = False
 
+# def main():
+#     """ Main method """
+#     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+#     window.setup()
+#     arcade.run()
+#
+#
+# if __name__ == '__main__':
+#     main()
+if __name__ == "__main__":
+    """This section of code will allow you to run your View
+    independently from the main.py file and its Director.
 
-def main():
-    """ Main method """
-    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    window.setup()
+    You can ignore this whole section. Keep it at the bottom
+    of your code.
+
+    It is advised you do not modify it unless you really know
+    what you are doing.
+    """
+    from utils import FakeDirector
+
+    window = arcade.Window(settings.WIDTH, settings.HEIGHT)
+    my_view = MyGame()
+    my_view.director = FakeDirector(close_on_next_view=True)
+    window.show_view(my_view)
     arcade.run()
 
-
-if __name__ == '__main__':
-    main()

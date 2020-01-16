@@ -2,7 +2,7 @@ import arcade
 import json
 from typing import List, Dict
 
-with open("Leaderboard.json", "r") as f:
+with open("leaderboard.json", "r") as f:
     prim_data = json.load(f)
 
 def msort(l: List[int]) -> List[int]:
