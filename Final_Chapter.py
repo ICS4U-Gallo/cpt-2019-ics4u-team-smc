@@ -1660,7 +1660,7 @@ class Communication:
         self.x_value = x
         self.y_value = y
 
-    def write_x(self):
+    def write_x(self)-> None:
          """
         write x data in to database
         Args:
@@ -1674,7 +1674,7 @@ class Communication:
         with open("xb.txt", "w") as f:
             f.write(self.x_value)
 
-    def write_y(self):
+    def write_y(self)-> None:
         """
         write y data in to database
         Args:
@@ -1690,7 +1690,7 @@ class Communication:
         with open("yb.txt", "w") as f:
             f.write(self.y_value)
 
-    def get_x():
+    def get_x()-> int:
          """
         read x data from database
         Args:
@@ -1709,7 +1709,7 @@ class Communication:
                 contents = f.read()
                 return contents
 
-    def get_y():
+    def get_y()-> int:
         """
         read y data from database
         Args:
