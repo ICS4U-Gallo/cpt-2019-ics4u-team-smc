@@ -56,21 +56,30 @@ def main():
     MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.run()
 
+from typing import List
 
-def insertion_stack(l):
+def insertion_stack(nums: List[int]) -> List[int]:
+    """ A helper function that sort the data in an ascending order
+
+   Args:
+       nums: The original data
+
+   Returns:
+       a sorted list in ascending order
+   """
     left = []
     right = []
-    for i in l:
-        while left and left[-1] < i:
+    for num in nums:
+        while left and left[-1] > num:
             right.append(left.pop())
-        left.append(i)
+        left.append(num)
         while right:
             left.append(right.pop())
-    return l
+    return left
 
-print(insertion_stack(l))
+print(insertion_stack([5, 3, 4, 2, 1]))
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 

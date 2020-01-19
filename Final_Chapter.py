@@ -189,7 +189,7 @@ class Enemy(arcade.Sprite):
         #     self.center_x = self.path_points[0][self.current_point]
         #     self.center_y = self.path_points[1][self.current_point]
         #     self.current_point += 1
-        self.center_y -= self.speed
+        self.center_y -= self.get_speed()
 
         # clear the enemy when it flies off the screen
         if self.center_y < 0:
@@ -206,10 +206,10 @@ class Enemy(arcade.Sprite):
             a tuple that represents boss killed(1), otherwise(0); killed xy coordinates in order.
         """
         global Score
-        self.ehp = max(0, self.ehp - hhp)
-        if self.ehp == 0:
+        self.ehp = max(0, self.get_ehp() - hhp)
+        if self.get_ehp() == 0:
             self.kill()
-            Score += self.score
+            Score += self.get_score()
         return (0, 0, 0)
 
 
@@ -1398,83 +1398,87 @@ class MyGame(arcade.Window):
 
                 # AutoPilot Mode
                 if mode == 1:
-                    # Decide the next move within three frame
-                    if self.frame_count % 3 == 0:
-                        def make_moves(x: int, y: int, n: int) -> Tuple:
-                            """ Make the player's plane move
+                    try:
+                        # Decide the next move within three frame
+                        if self.frame_count % 3 == 0:
+                            def make_moves(x: int, y: int, n: int) -> Tuple:
+                                """ Make the player's plane move
 
-                            Args:
-                                x: horizontal position
-                                y: vertical position
-                                n: number of moves
+                                Args:
+                                    x: horizontal position
+                                    y: vertical position
+                                    n: number of moves
 
-                            Returns:
-                                 a "decision"
-                            """
-                            # consider 4 moves
-                            if n == 4:
-                                return [], 0
+                                Returns:
+                                     a "decision"
+                                """
+                                # consider 4 moves
+                                if n == 4:
+                                    return [], 0
 
-                            # should only consider moves within the screen
-                            valid_move = []
-                            for m in directions:
-                                if 36 <= x + m[0] <= 764 and 48 <= y + m[1] <= 552:
-                                    valid_move.append(m)
+                                # should only consider moves within the screen
+                                valid_move = []
+                                for m in directions:
+                                    if 36 <= x + m[0] <= 764 and 48 <= y + m[1] <= 552:
+                                        valid_move.append(m)
 
-                            # choose best "child" move, do a recursion on state tree
-                            decision = []
-                            new_moves = []
-                            for m in valid_move:
-                                result = make_moves(x + m[0], y + m[1], n + 1)
-                                new_moves.append(result[0])
-                                decision.append(result[1])
-                            new_i = decision.index(min(decision))
+                                # choose best "child" move, do a recursion on state tree
+                                decision = []
+                                new_moves = []
+                                for m in valid_move:
+                                    result = make_moves(x + m[0], y + m[1], n + 1)
+                                    new_moves.append(result[0])
+                                    decision.append(result[1])
 
-                            # calculate the heuristic of a particular state
-                            # wants to hit enemy
-                            e = None
-                            for target in self.enemy_list:
-                                e = target
-                                break
-                            if e:
-                                tot_dist = MyGame.get_distance(e.center_x, e.center_y - e.speed*4 - 400, x, y)
-                                # dodge the laser from the boss while attacking
-                                if self.boss:
-                                    tot_dist = MyGame.get_distance(e.center_x + 100, e.center_y - e.speed * 4 - 400, x, y)
-                            else:
-                                tot_dist = MyGame.get_distance(SCREEN_WIDTH//2, 200, x, y)
+                                new_i = decision.index(min(decision))
 
-                            # hp bonus is more important!
-                            e = None
-                            for h in self.bonus:
-                                e = h
-                                break
+                                # calculate the heuristic of a particular state
+                                # wants to hit enemy
+                                e = None
+                                for target in self.enemy_list:
+                                    e = target
+                                    break
+                                if e:
+                                    tot_dist = MyGame.get_distance(e.center_x, e.center_y - e.speed*4 - 400, x, y)
+                                    # dodge the laser from the boss while attacking
+                                    if self.boss:
+                                        tot_dist = MyGame.get_distance(e.center_x + 100, e.center_y - e.speed * 4 - 400, x, y)
+                                else:
+                                    tot_dist = MyGame.get_distance(SCREEN_WIDTH//2, 200, x, y)
 
-                            if e:
-                                tot_dist = MyGame.get_distance(e.center_x, e.center_y - 20, x, y)
+                                # hp bonus is more important!
+                                e = None
+                                for h in self.bonus:
+                                    e = h
+                                    break
 
-                            return [valid_move[new_i]] + new_moves[new_i], decision[new_i] + tot_dist
+                                if e:
+                                    tot_dist = MyGame.get_distance(e.center_x, e.center_y - 20, x, y)
 
-                        moves = make_moves(self.player.center_x, self.player.center_y, 0)[0]
-                        mm = 0
+                                return [valid_move[new_i]] + new_moves[new_i], decision[new_i] + tot_dist
 
-                        # print(moves)
-                        moves.pop(3)
-                        # print("done")
-                        # avoid shaking
-                        # for i in range(1, 3):
-                        #     if moves[i][0]+moves[i-1][0] == 0 and moves[i][1]+moves[i-1][1] == 0:
-                        #         moves[i] = S
+                            moves = make_moves(self.player.center_x, self.player.center_y, 0)[0]
+                            mm = 0
+
+                            # print(moves)
+                            moves.pop(3)
+                            # print("done")
+                            # avoid shaking
+                            # for i in range(1, 3):
+                            #     if moves[i][0]+moves[i-1][0] == 0 and moves[i][1]+moves[i-1][1] == 0:
+                            #         moves[i] = S
 
 
-                    #print(self.player.center_x, self.player.center_y)
+                        #print(self.player.center_x, self.player.center_y)
 
-                    self.player.center_x += moves[mm][0]
-                    self.player.center_y += moves[mm][1]
+                        self.player.center_x += moves[mm][0]
+                        self.player.center_y += moves[mm][1]
 
-                    mm += 1
-                    if mm == 3:
-                        mm = 0
+                        mm += 1
+                        if mm == 3:
+                            mm = 0
+                    except:
+                        mode = 0
 
                 if level == 1:
                     mode = 2
@@ -1771,7 +1775,7 @@ class MyThread(threading.Thread):
 
 def main():
     vision = MyThread()
-    # 启动三个线程
+    # Start the threading
     vision.start()
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
@@ -1779,7 +1783,7 @@ def main():
     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     window.setup()
     arcade.run()
-    # 启动三个线程
+    # Start the threading
     vision.join()
     print("End Main threading")
 
