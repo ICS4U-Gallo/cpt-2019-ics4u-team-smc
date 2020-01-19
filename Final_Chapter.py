@@ -1645,22 +1645,38 @@ right_pressed = False
 
 
 class Communication:
+    """
+    This is a Communication class that use for save data
+
+    """
     def __init__(self, x: int, y: int):
+        """ Initialize Communication class
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        """
         self.x_value = x
         self.y_value = y
 
     def write_x(self):
-        # 存储为数据库
-        # with open("x_data(for_training).txt", "a") as f:
-        #     f.write(self.x_value)
+         """
+        write x data in to database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        """
         with open("x.txt", "w") as f:
             f.write(self.x_value)
         with open("xb.txt", "w") as f:
             f.write(self.x_value)
 
     def write_y(self):
-        # with open("y_data(for_training).txt", "a") as f:
-        #     f.write(self.y_value)
+        """
+        write y data in to database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        """
 
         with open("y.txt", "w") as f:
             f.write(self.y_value)
@@ -1669,6 +1685,12 @@ class Communication:
             f.write(self.y_value)
 
     def get_x():
+         """
+        read x data from database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        """
         try:
             with open("x.txt", 'r') as f:
                 contents = f.read()
@@ -1680,6 +1702,12 @@ class Communication:
                 return contents
 
     def get_y():
+        """
+        read y data from database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        """
         try:
             with open("y.txt", 'r') as f:
                 y_contents = f.read()
