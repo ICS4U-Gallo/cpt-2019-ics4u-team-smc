@@ -1636,22 +1636,44 @@ right_pressed = False
 
 
 class Communication:
+    """
+    This is a Communication class that use for save data
+
+    """
     def __init__(self, x: int, y: int):
+        """ Initialize Communication class
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        Returns:
+            None
+        """
         self.x_value = x
         self.y_value = y
 
-    def write_x(self):
-        # 存储为数据库
-        # with open("x_data(for_training).txt", "a") as f:
-        #     f.write(self.x_value)
+    def write_x(self)-> None:
+         """
+        write x data in to database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        Returns:
+            None
+        """
         with open("x.txt", "w") as f:
             f.write(self.x_value)
         with open("xb.txt", "w") as f:
             f.write(self.x_value)
 
-    def write_y(self):
-        # with open("y_data(for_training).txt", "a") as f:
-        #     f.write(self.y_value)
+    def write_y(self)-> None:
+        """
+        write y data in to database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        Returns:
+            None
+        """
 
         with open("y.txt", "w") as f:
             f.write(self.y_value)
@@ -1659,7 +1681,15 @@ class Communication:
         with open("yb.txt", "w") as f:
             f.write(self.y_value)
 
-    def get_x():
+    def get_x()-> str:
+         """
+        read x data from database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        Returns:
+            contents: x value in the database
+        """
         try:
             with open("x.txt", 'r') as f:
                 contents = f.read()
@@ -1670,7 +1700,15 @@ class Communication:
                 contents = f.read()
                 return contents
 
-    def get_y():
+    def get_y()-> str:
+        """
+        read y data from database
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        Returns:
+            contents: y value in the database
+        """
         try:
             with open("y.txt", 'r') as f:
                 y_contents = f.read()

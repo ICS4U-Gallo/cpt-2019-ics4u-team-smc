@@ -24,6 +24,8 @@ class UserHabitLearn:
             x_contents:The x value read out from data base
             y_contents:The y value read out from data base
             database: This is a dictionary that storge data from the database
+        Returns:
+            None
         """
         self.name = name
         with open("x_data(for_training).txt", "r") as f:
