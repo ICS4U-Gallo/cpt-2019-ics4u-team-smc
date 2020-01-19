@@ -1361,7 +1361,7 @@ class MyGame(arcade.Window):
                 self.assist.update()
 
                 # Face Mode
-                if self.current_state == GAME_RUNNING and mode == 2 and self.frame_count % 4 == 0:
+                if self.current_state == GAME_RUNNING and mode == 2 and self.frame_count % 3 == 0:
 
                     if Communication.get_x() != '' and Communication.get_y() != '':
                         try:
@@ -1640,6 +1640,7 @@ class Communication:
     This is a Communication class that use for save data
 
     """
+
     def __init__(self, x: int, y: int):
         """ Initialize Communication class
         Args:
@@ -1651,44 +1652,40 @@ class Communication:
         self.x_value = x
         self.y_value = y
 
-    def write_x(self)-> None:
-         """
-        write x data in to database
+    def write_x(self) -> None:
+        """ write x data in to database
         Args:
-            x_value: x value that read out from Vision
-            y_value: y value that read out from Vision
+           x_value: x value that read out from Vision
+           y_value: y value that read out from Vision
         Returns:
-            None
+           None
         """
         with open("x.txt", "w") as f:
             f.write(self.x_value)
         with open("xb.txt", "w") as f:
             f.write(self.x_value)
 
-    def write_y(self)-> None:
-        """
-        write y data in to database
+    def write_y(self) -> None:
+        """ write y data in to database
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
         Returns:
             None
         """
-
         with open("y.txt", "w") as f:
             f.write(self.y_value)
 
         with open("yb.txt", "w") as f:
             f.write(self.y_value)
 
-    def get_x()-> str:
-         """
-        read x data from database
+    def get_x() -> str:
+        """ read x data from database
         Args:
-            x_value: x value that read out from Vision
-            y_value: y value that read out from Vision
+           x_value: x value that read out from Vision
+           y_value: y value that read out from Vision
         Returns:
-            contents: x value in the database
+           contents: x value in the database
         """
         try:
             with open("x.txt", 'r') as f:
@@ -1700,9 +1697,8 @@ class Communication:
                 contents = f.read()
                 return contents
 
-    def get_y()-> str:
-        """
-        read y data from database
+    def get_y() -> str:
+        """ read y data from database
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
@@ -1713,7 +1709,6 @@ class Communication:
             with open("y.txt", 'r') as f:
                 y_contents = f.read()
                 return y_contents
-
         except:
             with open("yb.txt", 'r') as f:
                 y_contents = f.read()
