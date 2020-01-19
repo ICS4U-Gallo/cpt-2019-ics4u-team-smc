@@ -1654,6 +1654,8 @@ class Communication:
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
+        Returns:
+            None
         """
         self.x_value = x
         self.y_value = y
@@ -1664,6 +1666,8 @@ class Communication:
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
+        Returns:
+            None
         """
         with open("x.txt", "w") as f:
             f.write(self.x_value)
@@ -1676,6 +1680,8 @@ class Communication:
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
+        Returns:
+            None
         """
 
         with open("y.txt", "w") as f:
@@ -1690,6 +1696,8 @@ class Communication:
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
+        Returns:
+            contents: x value in the database
         """
         try:
             with open("x.txt", 'r') as f:
@@ -1707,6 +1715,8 @@ class Communication:
         Args:
             x_value: x value that read out from Vision
             y_value: y value that read out from Vision
+        Returns:
+            contents: y value in the database
         """
         try:
             with open("y.txt", 'r') as f:
