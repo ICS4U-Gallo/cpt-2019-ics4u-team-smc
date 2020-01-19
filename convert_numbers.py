@@ -57,6 +57,20 @@ def main():
     arcade.run()
 
 
+def insertion_stack(l):
+    left = []
+    right = []
+    for i in l:
+        while left and left[-1] < i:
+            right.append(left.pop())
+        left.append(i)
+        while right:
+            left.append(right.pop())
+    return l
+
+print(insertion_stack(l))
+
+
 if __name__ == "__main__":
     main()
 

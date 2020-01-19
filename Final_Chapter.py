@@ -1,9 +1,12 @@
-import arcade
+import json
 import math
 import random
+import threading
 from typing import Tuple, List, Dict
-import multiprocessing
-import json
+
+import arcade
+import cv2
+import numpy as np
 
 # default window
 SCREEN_WIDTH = 800
@@ -43,24 +46,25 @@ laser_bomb = False
 laser_effect = 0
 laser_fps = 0
 
-# Calculate the remaining missile
+# calculate the remaining missile
 laser_counter = 0
 laser_counter_update = 0
 
-# Create a dictionary that stores tracking information
-enemy_track = {}
+# store tracking information
+enemy_track = []
+enemy_track_1 = {}
 
 # Default autopilot mode
-mode = 1
-Q = (-4, 4)
-W = (0, 4)
-E = (4, 4)
-A = (-4, 0)
+mode = 2
+Q = (-5, 5)
+W = (0, 5)
+E = (5, 5)
+A = (-5, 0)
 S = (0, 0)
-D = (4, 0)
-Z = (-4, -4)
-X = (0, -4)
-C = (4, -4)
+D = (5, 0)
+Z = (-5, -5)
+X = (0, -5)
+C = (5, -5)
 directions = [Z, X, C, A, D, Q, W, E, S]
 moves = []
 mm = 0
@@ -98,7 +102,6 @@ class Enemy(arcade.Sprite):
         score (int): Kill enemy airplane score
         speed (float): The enemy speed
         number (int): The enemy number
-        path_type (str): The enemy's path
     """
     enemies: List["Enemy"] = []
 
@@ -119,13 +122,27 @@ class Enemy(arcade.Sprite):
         self.number = Enemy.count_enemy()
         Enemy.enemies.append(self)
 
-        self.path_type = "BSpline"
+    # Encapsulation getter and setter method
+    def get_ehp(self) -> float:
+        return self.ehp
 
-    # TODO
-    # self.max_point = 1000
-    # self.current_point = 0
-    # self.path_points = [(400, -20), (200, 200), (400, 400), (600, 600), (400, 800), (200, 600),
-    #                     (400, 400), (600, 200), (200, -200)]
+    def set_ehp(self, new_ehp) -> None:
+        self.ehp = new_ehp
+
+    def get_score(self) -> int:
+        return self.score
+
+    def set_score(self, new_score) -> None:
+        self.score = new_score
+
+    def get_speed(self) -> float:
+        return self.speed
+
+    def set_speed(self, new_speed) -> None:
+        self.speed = new_speed
+
+    def get_number(self) -> int:
+        return self.number
 
     @classmethod
     def count_enemy(cls) -> int:
@@ -157,15 +174,6 @@ class Enemy(arcade.Sprite):
         last = [0] + previous[-1] + [0]
         new_row = [last[i] + last[i - 1] for i in range(1, len(last))]
         return previous + [new_row]
-
-    # def set_BSpline_path(self):
-    #     self.path_type = 'BSpline'
-    #     data = np.array(self.points)
-    #     tck, u = interpolate.splprep(data.transpose(), s=0)
-    #     t = 1 / self.max_point
-    #     unew = np.arange(0, 1.01, t)
-    #     out = interpolate.splev(unew, tck)
-    #     self.path_points = out
 
     def drop(self) -> None:
         """ A helper function that updates enemy location
@@ -272,6 +280,43 @@ class Boss(Enemy):
         return (0, 0, 0)
 
 
+class Bullet(arcade.Sprite):
+    """ Create a Bullet class (Inherit from arcade.Sprite class)
+
+    Attributes:
+        img (str): The bullet image
+        scale (float): The bullet scale
+        hp (float): The health point of the bullet
+        number (int): number of bullets
+    """
+    bullets: List = []
+
+    def __init__(self, img: str, scale: float):
+        """ Create a bullet with arguments passed in
+
+       Args:
+           img: the bullet image
+           scale: the bullet scale
+       """
+        super().__init__(img, scale)
+        self.number = len(Bullet.bullets)
+        self.hp = 15
+        Bullet.bullets.append(self)
+
+    def hit(self, h: int) -> None:
+        """ Update the hp of self bullet when hits the enemy
+
+       Args:
+           h: damage to self bullet
+
+       Returns:
+           None
+       """
+        self.hp -= h
+        if self.hp < 0:
+            self.kill()
+
+
 class MyGame(arcade.Window):
     """ Create a main application class (Inherit from arcade.Window class)
 
@@ -282,6 +327,7 @@ class MyGame(arcade.Window):
         frame_count (int): Frame recorder
         hp (float): Airplane health point
         boss (bool): Boss state
+        laser_player (int): the number of laser
 # TODO
     """
 
@@ -323,7 +369,18 @@ class MyGame(arcade.Window):
         self.current_state = INSTRUCTIONS_PAGE_0
 
     @staticmethod
-    def get_distance(x1, y1, x2, y2):
+    def get_distance(x1: float, y1: float, x2: float, y2: float) -> float:
+        """ Calculate the distance between two points
+
+        Args:
+            x1: initial horizontal location
+            y1: initial vertical location
+            x2: destination horizontal location
+            y2: destination vertical location
+
+        Returns:
+            the distance between two points
+        """
         return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
     @staticmethod
@@ -402,7 +459,7 @@ class MyGame(arcade.Window):
             return []
         if len(enemy_list) == 1:
             return enemy_list
-        # recursive step
+        # recursive step (quick sort in list comprehension)
         return MyGame.sort_enemy([ele for ele in enemy_list[1:] if ele.ehp >= enemy_list[0].ehp]) + [
             enemy_list[0]] + MyGame.sort_enemy(
             [ele for ele in enemy_list[1:] if ele.ehp < enemy_list[0].ehp])
@@ -499,9 +556,7 @@ class MyGame(arcade.Window):
                                                   arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
 
                 if level == 2:
-                    arcade.draw_texture_rectangle(b.center_x - 70, b.center_y - 370, 30, 600,
-                                                  arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
-                    arcade.draw_texture_rectangle(b.center_x + 70, b.center_y - 370, 30, 600,
+                    arcade.draw_texture_rectangle(b.center_x, b.center_y - 370, 30, 600,
                                                   arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
 
                 if 3 <= level <= 4:
@@ -709,7 +764,7 @@ class MyGame(arcade.Window):
         global laser_bomb, laser_effect, laser_fps, laser_counter, laser_counter_update
         global boss_create_fps, boss_sound_on, game_sound_on, game_sound_1, game_sound_2, game_sound_3, game_sound_4
         global boss_sound_1, boss_sound_2, boss_sound_3, game_sound, boss_sound_4, boss_sound_5
-        global enemy_track, mode, moves, mm
+        global enemy_track, enemy_track_1, mode, moves, mm
 
         if self.current_state != GAME_RUNNING and self.frame_count % 3480 == 0:
             try:
@@ -814,22 +869,22 @@ class MyGame(arcade.Window):
                 self.dead()
 
             else:
-                # drop hp bonus every 10s
-                if self.frame_count % 600 == 599:
+                # drop hp bonus every 15s in the normal mode
+                if mode == 0 and self.frame_count % 900 == 899:
                     bonus_hp = arcade.Sprite("images/hp_bonus.png", 0.45)
                     bonus_hp.center_x = random.randrange(0, SCREEN_WIDTH)
                     bonus_hp.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
                     self.bonus.append(bonus_hp)
-                # else:
-                #     if self.frame_count % 3600 == 3599:
-                #         bonus_hp = arcade.Sprite("images/hp_bonus.png", 0.45)
-                #         bonus_hp.center_x = random.randrange(0, SCREEN_WIDTH)
-                #         bonus_hp.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
-                #         self.bonus.append(bonus_hp)
+                # drop hp bonus every 5s in the face and autopilot mode
+                elif mode != 0 and self.frame_count % 300 == 299 and (not self.boss):
+                    bonus_hp = arcade.Sprite("images/hp_bonus.png", 0.45)
+                    bonus_hp.center_x = random.randrange(0, SCREEN_WIDTH)
+                    bonus_hp.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
+                    self.bonus.append(bonus_hp)
 
                 if self.frame_count % 120 == 0 and not self.boss and not 1 <= explode <= 4:
 #TODO
-                    for _ in range(1 + level):
+                    for _ in range(2 + level):
                         # randomly generate enemy planes of different levels
                         ranNum = random.randint(0, 1000)
                         if ranNum < 300:
@@ -849,7 +904,7 @@ class MyGame(arcade.Window):
                         self.enemy_list.append(enemy)
 
                 # create a boss and ensure no small enemies appear during the boss battle
-                elif self.frame_count - fps == (1799 * (level + 1)) and not self.boss and not 1 <= explode <= 4:
+                elif self.frame_count - fps == (899 * (level + 1)) and not self.boss and not 1 <= explode <= 4:
                     # boss prompt
                     boss_create_fps = self.frame_count
                     prompt = True
@@ -879,14 +934,13 @@ class MyGame(arcade.Window):
                         # calculate different damage levels of laser from boss
                         if level == 0:
                             if self.player.center_x - 36 < boss.center_x < self.player.center_x + 36:
-                                self.hp = max(0, self.hp - 0.8)
+                                self.hp = max(0, self.hp - 0.03)
                         if level == 1:
                             if self.player.center_x - 36 < boss.center_x < self.player.center_x + 36:
-                                self.hp = max(0, self.hp - 0.9)
+                                self.hp = max(0, self.hp - 0.09)
                         if level == 2:
-                            if self.player.center_x - 36 < boss.center_x - 45 < self.player.center_x + 36 \
-                                    or self.player.center_x - 36 < boss.center_x + 15 < self.player.center_x + 36:
-                                self.hp = max(0, self.hp - 1)
+                            if self.player.center_x - 36 < boss.center_x < self.player.center_x + 36:
+                                self.hp = max(0, self.hp - 1.0)
                         if level == 3:
                             if self.player.center_x - 36 < boss.center_x - 45 < self.player.center_x + 36 \
                                     or self.player.center_x - 36 < boss.center_x < self.player.center_x + 36 \
@@ -911,15 +965,18 @@ class MyGame(arcade.Window):
                 bullet_collide_list = arcade.check_for_collision_with_list(self.player, self.bullet_list)
                 for collide_bullet in bullet_collide_list:
                     collide_bullet.kill()
-                    self.hp = max(0, self.hp - 5)
+                    if level <= 1:
+                        self.hp = max(0, self.hp - 2)
+                    else:
+                        self.hp = max(0, self.hp - 5)
 
                 # collision with enemy
                 enemy_collide_list = arcade.check_for_collision_with_list(self.player, self.enemy_list)
                 for collide_enemy in enemy_collide_list:
-                    collide_enemy.kill()
                     if self.boss:
-                        self.hp = 0
-                    self.hp = max(0, self.hp - 30)
+                        self.hp = max(0, self.hp - collide_enemy.ehp)
+                    self.hp = max(0, self.hp - 20)
+                    collide_enemy.kill()
 
 # TODO
                 # calculate different damage of player's bullet or bomb makes on enemy or boss
@@ -945,15 +1002,22 @@ class MyGame(arcade.Window):
                             explode_x = boss_hit[1]
                             explode_y = boss_hit[2]
                             fps = self.frame_count
+
                     for bullet_hit in bullet_hit_list_2:
-                        bullet_hit.kill()
-                        boss_hit = e.hitted(4)
+                        if level <= 1:
+                            bullet_hit.kill()
+                            boss_hit = e.hitted(3)
+                        else:
+                            bullet_hit.hit(e.ehp)
+                            boss_hit = e.hitted(4)
+
                         if boss_hit[0] == 1:
                             self.boss = False
                             explode = 1
                             explode_x = boss_hit[1]
                             explode_y = boss_hit[2]
                             fps = self.frame_count
+
                     for bullet_hit in bullet_hit_list_3:
                         boss_hit = e.hitted(0.4)
                         if boss_hit[0] == 1:
@@ -1079,58 +1143,132 @@ class MyGame(arcade.Window):
                     self.create_bullet("pet_bullet_3", 0.25, self.pet2.center_x, self.pet2.center_y, 0,
                                        BULLET_SPEED * min(2 + level, 3))
 
-                # store the enemy number to a list
-                sorted_enemy = MyGame.sort_enemy(self.enemy_list)
-                current_enemy = []
-                for enemy in sorted_enemy:
-                    current_enemy.append(enemy.number)
+                if level == 1:
 
-                if self.frame_count % 50 == 0:
-                    bullet_1 = arcade.Sprite("images/pet_bullet.png", 0.5)
-                    bullet_1.center_x = self.player.center_x - 20
-                    bullet_1.center_y = self.player.center_y
-                    bullet_1.angle = 0
+                    # store the enemy number to a list
+                    sorted_enemy = MyGame.sort_enemy(self.enemy_list)
+                    current_enemy = []
+                    for enemy in sorted_enemy:
+                        current_enemy.append(enemy.number)
 
-                    bullet_2 = arcade.Sprite("images/pet_bullet.png", 0.5)
-                    bullet_2.center_x = self.player.center_x + 20
-                    bullet_2.center_y = self.player.center_y
-                    bullet_2.angle = 0
+                    if self.frame_count % 50 == 0:
+                        bullet_1 = Bullet("images/pet_bullet.png", 0.5)
+                        bullet_1.center_x = self.player.center_x - 20
+                        bullet_1.center_y = self.player.center_y
+                        bullet_1.angle = 0
 
-                    if sorted_enemy:
-                        # select two targets that have biggest hp
-                        target_1 = sorted_enemy[0]
-                        target_2 = sorted_enemy[min(len(sorted_enemy)-1, 1)]
-                        # determine the enemy, ensure no missile on the A.I level
-                        if level != 0:
+                        bullet_2 = Bullet("images/pet_bullet.png", 0.5)
+                        bullet_2.center_x = self.player.center_x + 20
+                        bullet_2.center_y = self.player.center_y
+                        bullet_2.angle = 0
+
+                        if sorted_enemy:
+                            # select two targets that have biggest hp
+                            target_1 = sorted_enemy[0]
+                            target_2 = sorted_enemy[min(len(sorted_enemy) - 1, 1)]
+                            # determine the enemy, ensure no missile on the A.I level
+
                             self.bullet_pet_list.append(bullet_1)
                             self.bullet_pet_list.append(bullet_2)
                             # make a tracking list, with key being the number, the value being the bullet
-                            if target_1.number not in enemy_track:
-                                enemy_track[target_1.number] = []
-                            enemy_track[target_1.number].append(bullet_1)
+                            if target_1.number not in enemy_track_1:
+                                enemy_track_1[target_1.number] = []
+                            enemy_track_1[target_1.number].append(bullet_1)
+                            if target_2.number not in enemy_track_1:
+                                enemy_track_1[target_2.number] = []
+                            enemy_track_1[target_2.number].append(bullet_2)
 
-                            if target_2.number not in enemy_track:
-                                enemy_track[target_2.number] = []
-                            enemy_track[target_2.number].append(bullet_2)
+                    if sorted_enemy:
+                        for number, bullets in enemy_track_1.items():
+                            # determine if the enemy exists in the current fps
+                            if number in current_enemy:
+                                # make the bullet track the enemy
+                                for bullet in bullets:
+                                    # set the position of the bullet
+                                    start_x = bullet.center_x
+                                    start_y = bullet.center_y
 
-                if sorted_enemy:
-                    for number, bullets in enemy_track.items():
-                        # determine if the enemy exists in the current fps
-                        if number in current_enemy:
-                            # make the bullet track the enemy
-                            for bullet in bullets:
+                                    dest_x = Enemy.enemies[number].center_x
+                                    dest_y = Enemy.enemies[number].center_y
+
+                                    x_diff = dest_x - start_x
+                                    y_diff = dest_y - start_y
+                                    angle = math.atan2(y_diff, x_diff)
+                                    bullet.change_x = math.cos(angle) * BULLET_SPEED * (level // 3 + 3)
+                                    bullet.change_y = math.sin(angle) * BULLET_SPEED * (level // 3 + 3)
+
+                                    bullet.angle = math.degrees(angle) - 90
+                else:
+                    # store the enemy number to a list
+                    sorted_enemy = MyGame.sort_enemy(self.enemy_list)
+                    current_enemy = []
+                    for enemy in sorted_enemy:
+                        current_enemy.append(enemy.number)
+
+                    # store the current pet bullet to a list for future use
+                    cur_pet_bullet = []
+                    for pb in self.bullet_pet_list:
+                        cur_pet_bullet.append(pb)
+
+                    if len(cur_pet_bullet) == 0:
+                        bullet_1 = Bullet("images/pet_bullet.png", 0.5)
+                        bullet_1.center_x = self.player.center_x - 20
+                        bullet_1.center_y = self.player.center_y
+                        bullet_1.angle = 0
+
+                        if sorted_enemy:
+                            # recursion and backtracking
+                            def track_targets(s, hp):
+                                # print(s, hp)
+                                if not s or hp <= 0:
+                                    return []
+                                ans = []
+                                for i in range(len(s)):
+                                    if s[i].ehp <= hp:
+                                        ans.append([s[i]] + track_targets(s[:i] + s[i+1:], hp - s[i].ehp))
+
+                                max_score = -1
+                                max_index = -1
+                                for a in ans:
+                                    cur_score = 0
+                                    for e in a:
+                                        cur_score += e.score
+
+                                    if cur_score > max_score:
+                                        max_score = cur_score
+                                        max_index = ans.index(a)
+                                if max_score == -1:
+                                    return []
+                                return ans[max_index]
+
+                            targets = track_targets(sorted_enemy, 20 + level * 5)
+                            enemy_track.append((bullet_1, targets))
+                            if targets:
+                                self.bullet_pet_list.append(bullet_1)
+
+                    if sorted_enemy:
+                        # print(enemy_track[0][1])
+                        for bullet, targets in enemy_track:
+                            # determine if the enemy exists in the current fps
+                            new_targets = []
+                            for enemy in targets:
+                                if enemy.number in current_enemy:
+                                    new_targets.append(enemy)
+
+                            for enemy in new_targets:
+                                # make the bullet track the enemy
                                 # set the position of the bullet
                                 start_x = bullet.center_x
                                 start_y = bullet.center_y
 
-                                dest_x = Enemy.enemies[number].center_x
-                                dest_y = Enemy.enemies[number].center_y
+                                dest_x = enemy.center_x
+                                dest_y = enemy.center_y
 
                                 x_diff = dest_x - start_x
                                 y_diff = dest_y - start_y
                                 angle = math.atan2(y_diff, x_diff)
-                                bullet.change_x = math.cos(angle) * BULLET_SPEED * (level // 3 + 3)
-                                bullet.change_y = math.sin(angle) * BULLET_SPEED * (level // 3 + 3)
+                                bullet.change_x = math.cos(angle) * BULLET_SPEED * 1.5 * (level // 3 + 3)
+                                bullet.change_y = math.sin(angle) * BULLET_SPEED * 1.5 * (level // 3 + 3)
 
                                 bullet.angle = math.degrees(angle) - 90
 
@@ -1156,7 +1294,10 @@ class MyGame(arcade.Window):
                     hp_bonus.center_y -= 5
                     # update player's hp when it catches hp_bonus
                     if arcade.check_for_collision(self.player, hp_bonus):
-                        self.hp = min(100, self.hp + 30)
+                        if mode != 0:
+                            self.hp = min(100, self.hp + 80)
+                        else:
+                            self.hp = min(100, self.hp + 30)
                         arcade.play_sound(hp_bonus_sound)
                         hp_bonus.kill()
                     # remove hp_bonus when it gets out of windows
@@ -1226,7 +1367,35 @@ class MyGame(arcade.Window):
                 self.bullet_pet_list.update()
                 self.assist.update()
 
+
 # TODO
+                # Face Mode
+                if self.current_state == GAME_RUNNING and mode == 2 and self.frame_count % 4 == 0:
+
+                    if Communication.get_x() != '' and Communication.get_y() != '':
+                        try:
+                            self.player.center_x = min(800 - int(Communication.get_x()), 764)
+                            self.player.center_y = min(300 - int(Communication.get_y()), 552)
+                            # if len(move_list) == 2:
+                            #     if -5 <= (move_list[1][0] - move_list[0][0]) <= 5:
+                            #         self.player.center_x = move_list[0][0]
+                            #     else:
+                            #         self.player.center_x = move_list[1][0]
+                            #     if -5 <= (move_list[1][1] - move_list[0][1]) <= 5:
+                            #         self.player.center_y = move_list[0][1]
+                            #     else:
+                            #         self.player.center_y = move_list[1][1]
+
+                        except:
+                            self.player.center_x = 400
+                            self.player.center_y = -250
+                        # print(self.player.center_x, self.player.center_y)
+                    else:
+                        print("face not detected")
+
+                if level == 0:
+                    mode = 1
+
                 # AutoPilot Mode
                 if mode == 1:
                     # Decide the next move within three frame
@@ -1269,6 +1438,9 @@ class MyGame(arcade.Window):
                                 break
                             if e:
                                 tot_dist = MyGame.get_distance(e.center_x, e.center_y - e.speed*4 - 400, x, y)
+                                # dodge the laser from the boss while attacking
+                                if self.boss:
+                                    tot_dist = MyGame.get_distance(e.center_x + 100, e.center_y - e.speed * 4 - 400, x, y)
                             else:
                                 tot_dist = MyGame.get_distance(SCREEN_WIDTH//2, 200, x, y)
 
@@ -1277,6 +1449,7 @@ class MyGame(arcade.Window):
                             for h in self.bonus:
                                 e = h
                                 break
+
                             if e:
                                 tot_dist = MyGame.get_distance(e.center_x, e.center_y - 20, x, y)
 
@@ -1285,11 +1458,11 @@ class MyGame(arcade.Window):
                         moves = make_moves(self.player.center_x, self.player.center_y, 0)[0]
                         mm = 0
 
-                        print(moves)
+                        # print(moves)
                         moves.pop(3)
-                        print("done")
-                        # avoid 抽搐
-                        # for i in range(1, 4):
+                        # print("done")
+                        # avoid shaking
+                        # for i in range(1, 3):
                         #     if moves[i][0]+moves[i-1][0] == 0 and moves[i][1]+moves[i-1][1] == 0:
                         #         moves[i] = S
 
@@ -1303,6 +1476,10 @@ class MyGame(arcade.Window):
                     if mm == 3:
                         mm = 0
 
+                if level == 1:
+                    mode = 2
+                if level >= 2:
+                    mode = 0
                 # keyboard control the movement of the player
                 if up_pressed:
                     self.player.center_y = min(552, self.player.center_y + 5)
@@ -1390,12 +1567,8 @@ class MyGame(arcade.Window):
             # self.current_state = GAME_RUNNING
             # game_sound_on = 0
 
-
-
-        elif self.current_state == WIN:
-            # if self.current_state == LEADERBOARD and x >= 629 and x <= 770 and y >= 12 and y <= 64:
-            #     self.current_state = WIN
-            self.close()
+        elif self.current_state == WIN and 629 <= x <= 770 and 12 <= y <= 64:
+            self.current_state = LEADERBOARD
 
             # Restart the game.
             # level = 0
@@ -1467,12 +1640,181 @@ left_pressed = False
 right_pressed = False
 
 
-def main():
-    """ Main method """
+class Communication:
+    def __init__(self, x: int, y: int):
+        self.x_value = x
+        self.y_value = y
+
+    def write_x(self):
+        # 存储为数据库
+        # with open("x_data(for_training).txt", "a") as f:
+        #     f.write(self.x_value)
+        with open("x.txt", "w") as f:
+            f.write(self.x_value)
+        with open("xb.txt", "w") as f:
+            f.write(self.x_value)
+
+    def write_y(self):
+        # with open("y_data(for_training).txt", "a") as f:
+        #     f.write(self.y_value)
+
+        with open("y.txt", "w") as f:
+            f.write(self.y_value)
+
+        with open("yb.txt", "w") as f:
+            f.write(self.y_value)
+
+    def get_x():
+        try:
+            with open("x.txt", 'r') as f:
+                contents = f.read()
+                return contents
+
+        except:
+            with open("xb.txt", 'r') as f:
+                contents = f.read()
+                return contents
+
+    def get_y():
+        try:
+            with open("y.txt", 'r') as f:
+                y_contents = f.read()
+                return y_contents
+
+        except:
+            with open("yb.txt", 'r') as f:
+                y_contents = f.read()
+                return y_contents
+
+
+class Vision(Communication):
+
+    def __init__(self, x: int, y: int):
+        super().__init__(x, y)
+
+    @staticmethod
+    def Face_Detect():
+        cap = cv2.VideoCapture(0)  # 捕获摄像头图像
+
+        # 判断视频是否打开
+
+        if cap.isOpened():
+            print('Open')
+        else:
+            print('camra is not opened')
+        cap = cv2.VideoCapture(0)
+        (success, frame) = cap.read()  # 读入第一帧
+
+        classifier = \
+            cv2.CascadeClassifier("opencv-master/data/haarcascades/haarcascade_frontalface_alt.xml")
+
+        # 定义人脸识别的分类数据集，需要自己查找，在opencv的目录下，参考上面我的路径**
+
+        while success:  # 如果读入帧正常
+            size = frame.shape[:2]
+            image = np.zeros(size, dtype=np.float16)
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            cv2.equalizeHist(image, image)
+            divisor = 8
+            (h, w) = size
+            minSize = (int(w / divisor), int(h / divisor))  # 像素一定是整数，或者用w//divisor
+
+            faceRects = classifier.detectMultiScale(image, 1.2, 2, cv2.CASCADE_SCALE_IMAGE, minSize)
+
+            # 人脸识别
+
+            if len(faceRects) > 0:
+                for faceRect in faceRects:
+                    (x, y, w, h) = faceRect
+                    x_data = str(x)
+                    y_data = str(y)
+                    now = Communication(x_data, y_data)
+                    now.write_x()
+                    now.write_y()
+                    # print (x, y)
+                    """
+                    cv2.circle(frame, (x + w // 2, y + h // 2), min(w
+                               // 2, h // 2), (0xFF, 0, 0), 2)  # 圆形轮廓
+                    cv2.circle(frame, (x + w // 4, y + 2 * h // 5),
+                               min(w // 8, h // 8), (0, 0xFF, 0), 2)  # 左眼轮廓
+                    cv2.circle(frame, (x + 3 * w // 4, y + 2 * h // 5),
+                               min(w // 8, h // 8), (0, 0xFF, 0), 2)  # 右眼轮廓
+                    cv2.circle(frame, (x + w // 2, y + 2 * h // 3),
+                               min(w // 8, h // 8), (0, 0xFF, 0), 2)  # 鼻子轮廓
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0,
+                                  0xFF), 2)  # 矩形轮廓
+                    """
+                    # y通道B（冗余通道）
+
+                    with open('yb.txt', 'w') as f:
+                        f.write(str(y))
+
+                    # x通道B（冗余通道）
+
+                    with open('xb.txt', 'w') as f:
+                        f.write(str(x))
+
+            # 显示轮廓
+
+            (success, frame) = cap.read()  # 如正常则读入下一帧
+
+        # 循环结束则清零
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+class MyThread(threading.Thread):
+    def run(self):
+        print("bs")
+        Vision.Face_Detect()
+
+class My_secound_Thread(threading.Thread):
+    def run(self):
+        """
+        try:
+            with open("x.txt", 'r') as f:
+                contents = f.read()
+                print(contents)
+
+        except:
+            with open("xb.txt", 'r') as f:
+                contents = f.read()
+                print(contents)
+        """
+
+
+"""    
+
+    print ("Start main threading")
+    # 创建三个线程
     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     window.setup()
     arcade.run()
+    """
+
+
+def main():
+    vision = MyThread()
+    # 启动三个线程
+    vision.start()
+    SCREEN_WIDTH = 800
+    SCREEN_HEIGHT = 600
+    SCREEN_TITLE = "WeFly X Charlie"
+    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window.setup()
+    arcade.run()
+    # 启动三个线程
+    vision.join()
+    print("End Main threading")
+
+# def main():
+#     """ Main method """
+#     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+#     window.setup()
+#     arcade.run()
 
 
 if __name__ == '__main__':
     main()
+

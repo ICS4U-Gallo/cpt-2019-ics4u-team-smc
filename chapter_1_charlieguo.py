@@ -4,7 +4,6 @@ import random
 from typing import Tuple, List, Dict
 import multiprocessing
 import json
-import settings
 
 # default window
 SCREEN_WIDTH = 800
@@ -51,6 +50,21 @@ laser_counter_update = 0
 # Create a dictionary that stores tracking information
 enemy_track = {}
 
+# Default autopilot mode
+mode = 1
+Q = (-4, 4)
+W = (0, 4)
+E = (4, 4)
+A = (-4, 0)
+S = (0, 0)
+D = (4, 0)
+Z = (-4, -4)
+X = (0, -4)
+C = (4, -4)
+directions = [Z, X, C, A, D, Q, W, E, S]
+moves = []
+mm = 0
+
 # sound error handling
 try:
     background_sound = arcade.sound.load_sound("music/bgm_zhuxuanlv.mp3")
@@ -73,49 +87,44 @@ try:
 
 except Exception as e:
     print("Error loading sound.", e)
-""""""
-# class Movie(Product):
-#     """ Create a Movie class (Inherit from Product class)
-#
-#     Attributes:
-#         name (str): The name of the movie
-#         price (float): The price of the movie
-#         release_year (int): The release year of the movie
-#         director (str): The director of the movie
-#     """
-#     all_movies: List["Movie"] = []
-#
-#     def __init__(self, name: str, price: float, release_year: int, director: str):
-#         """ Create a Movie object and add it to the movies list
-#
-#         Args:
-#             name: The name of the movie
-#             price: The price of the movie
-#             release_year: The release year of the movie
-#             director: The director of the movie
-#         """
-#         super().__init__(price, name)
-#         self.release_year = release_year
-#         self.director = director
-#         Movie.all_movies.append(self)
- # @classmethod
- #    def get_directed_by(cls, director: str) -> List["Movie"]:
- #        """Search movies of a particular director and add them to a list
- #
- #        Args:
- #            director: a person who made the movies
- #
- #        Returns:
- #            a list of Movies (class) that are produced by a particular director
- #        """
- #        movie_list = []
- #        for movie in cls.all_movies:
- #            if movie.director == director:
- #                movie_list.append(movie)
- #
- #        return movie_list
 
-""""""
+
+
+class Bullet(arcade.Sprite):
+    """ Create a Bullet class (Inherit from arcade.Sprite class)
+
+    Attributes:
+        img (str): The bullet image
+        scale (float): The bullet scale
+        hp (float): The health point of the bullet
+        number (int): number of bullets
+    """
+    bullets: List = []
+
+    def __init__(self, img: str, scale: float):
+        """ Create a bullet with arguments passed in
+
+       Args:
+           img: the bullet image
+           scale: the bullet scale
+       """
+        super().__init__(img, scale)
+        self.number = len(Bullet.bullets)
+        self.hp = 10
+        Bullet.bullets.append(self)
+
+    def hit(self, h: int) -> None:
+        """ Update the hp of self bullet when hits the enemy
+
+       Args:
+           h: damage to self bullet
+
+       Returns:
+           None
+       """
+        self.hp -= h
+        if self.hp < 0:
+            self.kill()
 
 
 class Enemy(arcade.Sprite):
@@ -157,7 +166,6 @@ class Enemy(arcade.Sprite):
     # self.path_points = [(400, -20), (200, 200), (400, 400), (600, 600), (400, 800), (200, 600),
     #                     (400, 400), (600, 200), (200, -200)]
 
-
     @classmethod
     def count_enemy(cls) -> int:
         """ a class method that counts enemies
@@ -197,6 +205,7 @@ class Enemy(arcade.Sprite):
     #     unew = np.arange(0, 1.01, t)
     #     out = interpolate.splev(unew, tck)
     #     self.path_points = out
+
     def drop(self) -> None:
         """ A helper function that updates enemy location
 
@@ -259,7 +268,7 @@ class Boss(Enemy):
         super().__init__(image, scale, ehp, score, speed)
         self.left_boss = True
 
-    # drop method overide
+    # drop method overriding
     def drop(self):
         """ A helper function that updates boss location
 
@@ -282,7 +291,7 @@ class Boss(Enemy):
         else:
             super().drop()
 
-    # hitted method override
+    # hitted method overriding
     def hitted(self, hhp: float) -> Tuple[int, float, float]:
         """ Enemy hit by self bullet. Return boss kill information and killed coordinates.
 
@@ -302,7 +311,7 @@ class Boss(Enemy):
         return (0, 0, 0)
 
 
-class MyGame(arcade.View):
+class MyGame(arcade.Window):
     """ Create a main application class (Inherit from arcade.Window class)
 
     Attributes:
@@ -312,11 +321,10 @@ class MyGame(arcade.View):
         frame_count (int): Frame recorder
         hp (float): Airplane health point
         boss (bool): Boss state
-        laser_player (int): Number of laser
+# TODO
     """
 
-    def __init__(self):
-        # arcade.window: width: int, height: int, title: str
+    def __init__(self, width: int, height: int, title: str):
         """ Initialize the game window
 
         Args:
@@ -324,14 +332,14 @@ class MyGame(arcade.View):
             height: Window height
             title: Window title
         """
-        super().__init__()
+        super().__init__(width, height, title)
 
         self.frame_count = 0
         self.hp = 100
         self.boss = False
         self.laser_player = 0
 
-        self.enemy_list: List[Enemy] = None
+        self.enemy_list = None
         self.bullet_list = None
         self.bullet_pet_list = None
         self.bullet_self_list = None
@@ -352,6 +360,10 @@ class MyGame(arcade.View):
         self.instructions.append(texture)
 
         self.current_state = INSTRUCTIONS_PAGE_0
+
+    @staticmethod
+    def get_distance(x1, y1, x2, y2):
+        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
     @staticmethod
     def msort(l: List[int]) -> List[int]:
@@ -568,6 +580,14 @@ class MyGame(arcade.View):
         data = MyGame.sorted_data(prim_data)
 
         def leaderboard(data: Dict) -> List[List[str]]:
+            """ Process the player's data and record the best performance
+
+            Args:
+                data: the original sorted data
+
+            Returns:
+                a list of actual data that will display on the leaderboard
+            """
             leader_list = []
             for score in data.keys():
                 for time in data[score]:
@@ -580,6 +600,13 @@ class MyGame(arcade.View):
         m = leaderboard(data)
 
         def final_output() -> Tuple:
+            """ Compute the final scores and times
+
+            Args:
+                None
+            Returns:
+                a tuple (scores, times)
+            """
             scores = []
             times = []
             for i in m:
@@ -650,6 +677,8 @@ class MyGame(arcade.View):
 
         # Add player ship
         self.player = arcade.Sprite("images/SeHero.png", 0.8)
+        self.player.center_x = SCREEN_WIDTH // 2
+        self.player.center_y = SCREEN_HEIGHT // 2
         self.pet = arcade.Sprite("images/pet.png", 0.85)
         self.pet2 = arcade.Sprite("images/pet.png", 0.85)
         self.player_list.append(self.player)
@@ -682,6 +711,20 @@ class MyGame(arcade.View):
         self.current_state = GAME_OVER
 
     def create_bullet(self, picture: str, scale: float, x: int, y: int, cx: int, cy: int, angle=0) -> None:
+        """ Helper function that creates bullet
+
+        Args:
+            picture: the bullet image
+            scale: the bullet scale
+            x: the bullet initial x location
+            y: the bullet initial y location
+            cx: the bullet's change in x direction
+            cy: the bullet's change in y direction
+            angle: the bullet angle, default as 0
+
+        Returns:
+            None
+        """
         bullet = arcade.Sprite("images/" + picture + ".png", scale)
         bullet.center_x = x
         bullet.center_y = y
@@ -705,19 +748,17 @@ class MyGame(arcade.View):
         global laser_bomb, laser_effect, laser_fps, laser_counter, laser_counter_update
         global boss_create_fps, boss_sound_on, game_sound_on, game_sound_1, game_sound_2, game_sound_3, game_sound_4
         global boss_sound_1, boss_sound_2, boss_sound_3, game_sound, boss_sound_4, boss_sound_5
-        global enemy_track
+        global enemy_track, mode, moves, mm
 
         if self.current_state != GAME_RUNNING and self.frame_count % 3480 == 0:
             try:
-                pass
-                # arcade.play_sound(background_sound)
+                arcade.play_sound(background_sound)
             except Exception as e:
                 print("Error playing sound.", e)
 
         if self.current_state == GAME_RUNNING:
             try:
-                pass
-                # background_sound.pause()
+                background_sound.pause()
             except Exception as e:
                 print("Error pausing sound.", e)
 
@@ -726,66 +767,63 @@ class MyGame(arcade.View):
             return
         if self.current_state == GAME_RUNNING:
 
-            # if self.boss and boss_sound_on == 0:
-            #     boss_sound_on = 1
-            #     try:
-            #         pass
-            #         if level == 0:
-            #             game_sound.pause()
-            #             arcade.play_sound(boss_sound_1)
-            #         if level == 1:
-            #             game_sound_1.pause()
-            #             arcade.play_sound(boss_sound_2)
-            #         if level == 2:
-            #             game_sound_2.pause()
-            #             arcade.play_sound(boss_sound_3)
-            #         if level == 3:
-            #             game_sound_3.pause()
-            #             arcade.play_sound(boss_sound_4)
-            #         if level == 4:
-            #             game_sound_4.pause()
-            #             arcade.play_sound(boss_sound_5)
-            #     except Exception as e:
-            #         print("Error pausing sound.", e)
+            if self.boss and boss_sound_on == 0:
+                boss_sound_on = 1
+                try:
+                    if level == 0:
+                        game_sound.pause()
+                        arcade.play_sound(boss_sound_1)
+                    if level == 1:
+                        game_sound_1.pause()
+                        arcade.play_sound(boss_sound_2)
+                    if level == 2:
+                        game_sound_2.pause()
+                        arcade.play_sound(boss_sound_3)
+                    if level == 3:
+                        game_sound_3.pause()
+                        arcade.play_sound(boss_sound_4)
+                    if level == 4:
+                        game_sound_4.pause()
+                        arcade.play_sound(boss_sound_5)
+                except Exception as e:
+                    print("Error pausing sound.", e)
 
-            # if not self.boss:
-            #     try:
-            #         pass
-            #         # if level == 0:
-            #         #     boss_sound_1.pause()
-            #         # if level == 1:
-            #         #     boss_sound_2.pause()
-            #         # if level == 2:
-            #         #     boss_sound_3.pause()
-            #         # if level == 3:
-            #         #     boss_sound_4.pause()
-            #         # if level == 4:
-            #         #     boss_sound_5.pause()
-            #
-            #     except Exception as e:
-            #         print("Error pausing sound.", e)
-            #
-            #     boss_sound_on = 0
+            if not self.boss:
+                try:
+                    if level == 0:
+                        boss_sound_1.pause()
+                    if level == 1:
+                        boss_sound_2.pause()
+                    if level == 2:
+                        boss_sound_3.pause()
+                    if level == 3:
+                        boss_sound_4.pause()
+                    if level == 4:
+                        boss_sound_5.pause()
+
+                except Exception as e:
+                    print("Error pausing sound.", e)
+
+                boss_sound_on = 0
                 # if (self.frame_count - fps) == 180 and fps != 0:
                 #     game_sound_on = 0
 
-            # if game_sound_on == 0:
-            #     try:
-            #         pass
-            #         # if level == 0:
-            #         #     arcade.play_sound(game_sound)
-            #         # if level == 1:
-            #         #     arcade.play_sound(game_sound_1)
-            #         # if level == 2:
-            #         #     arcade.play_sound(game_sound_2)
-            #         # if level == 3:
-            #         #     arcade.play_sound(game_sound_3)
-            #         # if level == 4:
-            #         #     arcade.play_sound(game_sound_4)
-            #
-            #     except Exception as e:
-            #         print("Error playing sound.", e)
-            #     game_sound_on = 1
+            if game_sound_on == 0:
+                try:
+                    if level == 0:
+                        arcade.play_sound(game_sound)
+                    if level == 1:
+                        arcade.play_sound(game_sound_1)
+                    if level == 2:
+                        arcade.play_sound(game_sound_2)
+                    if level == 3:
+                        arcade.play_sound(game_sound_3)
+                    if level == 4:
+                        arcade.play_sound(game_sound_4)
+
+                except Exception as e:
+                    print("Error playing sound.", e)
+                game_sound_on = 1
 
             # update remaining laser based on current score
             laser_counter = Score // 2000 + 1
@@ -795,37 +833,42 @@ class MyGame(arcade.View):
                 laser_counter_update -= 1
 
             if self.hp <= 0:
-                # game_sound_on = 10
-                # try:
-                #     pass
-                #     # game_sound.pause()
-                #     # game_sound_1.pause()
-                #     # game_sound_2.pause()
-                #     # game_sound_3.pause()
-                #     # game_sound_4.pause()
-                #     #
-                #     # boss_sound_1.pause()
-                #     # boss_sound_2.pause()
-                #     # boss_sound_3.pause()
-                #     # boss_sound_4.pause()
-                #     # boss_sound_5.pause()
-                #
-                # except Exception as e:
-                #     print("Error pausing sound.", e)
+                game_sound_on = 10
+                try:
+                    game_sound.pause()
+                    game_sound_1.pause()
+                    game_sound_2.pause()
+                    game_sound_3.pause()
+                    game_sound_4.pause()
+
+                    boss_sound_1.pause()
+                    boss_sound_2.pause()
+                    boss_sound_3.pause()
+                    boss_sound_4.pause()
+                    boss_sound_5.pause()
+
+                except Exception as e:
+                    print("Error pausing sound.", e)
 
                 self.dead()
 
             else:
-                # drop hp bonus every 60s
-                if self.frame_count % 1800 == 1799:
+                # drop hp bonus every 10s
+                if self.frame_count % 600 == 599:
                     bonus_hp = arcade.Sprite("images/hp_bonus.png", 0.45)
                     bonus_hp.center_x = random.randrange(0, SCREEN_WIDTH)
                     bonus_hp.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
                     self.bonus.append(bonus_hp)
+                # else:
+                #     if self.frame_count % 3600 == 3599:
+                #         bonus_hp = arcade.Sprite("images/hp_bonus.png", 0.45)
+                #         bonus_hp.center_x = random.randrange(0, SCREEN_WIDTH)
+                #         bonus_hp.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
+                #         self.bonus.append(bonus_hp)
 
                 if self.frame_count % 120 == 0 and not self.boss and not 1 <= explode <= 4:
 #TODO
-                    for _ in range(3 + level):
+                    for _ in range(1 + level):
                         # randomly generate enemy planes of different levels
                         ranNum = random.randint(0, 1000)
                         if ranNum < 300:
@@ -927,7 +970,9 @@ class MyGame(arcade.View):
                     bullet_hit_list_3 = arcade.check_for_collision_with_list(e, self.assist)
                     for bullet_hit in bullet_hit_list:
                         bullet_hit.kill()
-                        if level < 2:
+                        if level == 0:
+                            boss_hit = e.hitted(2)
+                        elif level < 2:
                             boss_hit = e.hitted(1)
                         elif level == 2:
                             boss_hit = e.hitted(3)
@@ -974,8 +1019,8 @@ class MyGame(arcade.View):
                 elif explode == 4 and self.frame_count - fps == 180:
                     explode += 1
                     level += 1
-                    # bomb_sound.pause()
-                    # game_sound_on = 0
+                    bomb_sound.pause()
+                    game_sound_on = 0
 
                 # use loop to make all enemies facing to the player
                 for enemy in self.enemy_list:
@@ -999,7 +1044,15 @@ class MyGame(arcade.View):
                     # determine the shooting characteristics of enemy / boss planes
                     if type(enemy).__name__ == "Boss" and self.frame_count % ((120 - 20 * level) // 2) == 0:
 
-                        def add_bullet(n) -> None:
+                        def add_bullet(n: int) -> None:
+                            """ Use recursion to create boss bullet's trajectory
+
+                            Args:
+                                n: number of times it creates bullet
+
+                            Returns:
+                                None
+                            """
 
                             if n != 4:
                                 bullet_1 = arcade.Sprite("images/boss_bullet.png", 0.5)
@@ -1072,12 +1125,12 @@ class MyGame(arcade.View):
                     current_enemy.append(enemy.number)
 
                 if self.frame_count % 50 == 0:
-                    bullet_1 = arcade.Sprite("images/pet_bullet.png", 0.5)
+                    bullet_1 = Bullet("images/pet_bullet.png", 0.5)
                     bullet_1.center_x = self.player.center_x - 20
                     bullet_1.center_y = self.player.center_y
                     bullet_1.angle = 0
 
-                    bullet_2 = arcade.Sprite("images/pet_bullet.png", 0.5)
+                    bullet_2 = Bullet("images/pet_bullet.png", 0.5)
                     bullet_2.center_x = self.player.center_x + 20
                     bullet_2.center_y = self.player.center_y
                     bullet_2.angle = 0
@@ -1086,7 +1139,8 @@ class MyGame(arcade.View):
                         # select two targets that have biggest hp
                         target_1 = sorted_enemy[0]
                         target_2 = sorted_enemy[min(len(sorted_enemy)-1, 1)]
-                        # determine the enemy
+                        # determine the enemy, ensure no missile on the A.I level
+
                         self.bullet_pet_list.append(bullet_1)
                         self.bullet_pet_list.append(bullet_2)
                         # make a tracking list, with key being the number, the value being the bullet
@@ -1147,16 +1201,6 @@ class MyGame(arcade.View):
                     # remove hp_bonus when it gets out of windows
                     elif hp_bonus.top < 0:
                         hp_bonus.kill()
-
-                # keyboard control the movement of the player
-                if up_pressed:
-                    self.player.center_y = min(552, self.player.center_y + 5)
-                if down_pressed:
-                    self.player.center_y = max(48, self.player.center_y - 5)
-                if left_pressed:
-                    self.player.center_x = max(36, self.player.center_x - 5)
-                if right_pressed:
-                    self.player.center_x = min(764, self.player.center_x + 5)
 
                 # move pet with self plane
                 self.pet.center_x = self.player.center_x + 80
@@ -1220,6 +1264,94 @@ class MyGame(arcade.View):
                 self.bullet_self_list.update()
                 self.bullet_pet_list.update()
                 self.assist.update()
+
+# TODO
+                # AutoPilot Mode
+                if mode == 1:
+                    # Decide the next move within three frame
+                    if self.frame_count % 3 == 0:
+                        def make_moves(x: int, y: int, n: int) -> Tuple:
+                            """ Make the player's plane move
+
+                            Args:
+                                x: horizontal position
+                                y: vertical position
+                                n: number of moves
+
+                            Returns:
+                                 a "decision"
+                            """
+                            # consider 4 moves
+                            if n == 4:
+                                return [], 0
+
+                            # should only consider moves within the screen
+                            valid_move = []
+                            for m in directions:
+                                if 36 <= x + m[0] <= 764 and 48 <= y + m[1] <= 552:
+                                    valid_move.append(m)
+
+                            # choose best "child" move, do a recursion on state tree
+                            decision = []
+                            new_moves = []
+                            for m in valid_move:
+                                result = make_moves(x + m[0], y + m[1], n + 1)
+                                new_moves.append(result[0])
+                                decision.append(result[1])
+                            new_i = decision.index(min(decision))
+
+                            # calculate the heuristic of a particular state
+                            # wants to hit enemy
+                            e = None
+                            for target in self.enemy_list:
+                                e = target
+                                break
+                            if e:
+                                tot_dist = MyGame.get_distance(e.center_x, e.center_y - e.speed*4 - 400, x, y)
+                            else:
+                                tot_dist = MyGame.get_distance(SCREEN_WIDTH//2, 200, x, y)
+
+                            # hp bonus is more important!
+                            e = None
+                            for h in self.bonus:
+                                e = h
+                                break
+                            if e:
+                                tot_dist = MyGame.get_distance(e.center_x, e.center_y - 20, x, y)
+
+                            return [valid_move[new_i]] + new_moves[new_i], decision[new_i] + tot_dist
+
+                        moves = make_moves(self.player.center_x, self.player.center_y, 0)[0]
+                        mm = 0
+
+                        print(moves)
+                        moves.pop(3)
+                        print("done")
+                        # avoid 抽搐
+                        # for i in range(1, 4):
+                        #     if moves[i][0]+moves[i-1][0] == 0 and moves[i][1]+moves[i-1][1] == 0:
+                        #         moves[i] = S
+
+
+                    #print(self.player.center_x, self.player.center_y)
+
+                    self.player.center_x += moves[mm][0]
+                    self.player.center_y += moves[mm][1]
+
+                    mm += 1
+                    if mm == 3:
+                        mm = 0
+
+                # keyboard control the movement of the player
+                if up_pressed:
+                    self.player.center_y = min(552, self.player.center_y + 5)
+                if down_pressed:
+                    self.player.center_y = max(48, self.player.center_y - 5)
+                if left_pressed:
+                    self.player.center_x = max(36, self.player.center_x - 5)
+                if right_pressed:
+                    self.player.center_x = min(764, self.player.center_x + 5)
+
         # update the frame_count
         self.frame_count += 1
 
@@ -1235,8 +1367,9 @@ class MyGame(arcade.View):
         Returns:
             None
         """
-        self.player.center_x = x
-        self.player.center_y = y
+        if mode == 0:
+            self.player.center_x = x
+            self.player.center_y = y
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         """ Called whenever the user presses a mouse button
@@ -1372,30 +1505,13 @@ down_pressed = False
 left_pressed = False
 right_pressed = False
 
-# def main():
-#     """ Main method """
-#     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-#     window.setup()
-#     arcade.run()
-#
-#
-# if __name__ == '__main__':
-#     main()
-if __name__ == "__main__":
-    """This section of code will allow you to run your View
-    independently from the main.py file and its Director.
 
-    You can ignore this whole section. Keep it at the bottom
-    of your code.
-
-    It is advised you do not modify it unless you really know
-    what you are doing.
-    """
-    from utils import FakeDirector
-
-    window = arcade.Window(settings.WIDTH, settings.HEIGHT)
-    my_view = MyGame()
-    my_view.director = FakeDirector(close_on_next_view=True)
-    window.show_view(my_view)
+def main():
+    """ Main method """
+    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window.setup()
     arcade.run()
 
+
+if __name__ == '__main__':
+    main()
