@@ -207,6 +207,7 @@ class Boss(Enemy):
         speed (float): The enemy speed
         left_boss (bool): Trigger the left movement of boss
     """
+
     def __init__(self, image: str, scale: float, ehp: float, score: int, speed: float):
         """ Initialize a Boss with information passed in.
 
@@ -314,12 +315,14 @@ class MyGame(arcade.Window):
         enemy_list (List[Enemy]): enemy_list, default as none
         bullet_list (List[Bullet]): enemy bullets, default as none
         bullet_pet_list (List[Bullet]): pet bullets, default as none
-        bullet_self_list (List[Bullet]): self bullets, default as none
-        enemy_list (List): enemy_list, default as none
-        enemy_list (List): enemy_list, default as none
-        enemy_list (List): enemy_list, default as none
-
-# TODO
+        player_list (List["Sprite"]): player airplanes, default as none
+        player ("Sprite"): player, default as none
+        pet_list (List["Sprite"]): pets, default as none
+        pet ("Sprite"): left pet, default as none
+        pet2: right pet, default as none
+        assist ("Sprite"): missile, default as none
+        bonus ("Sprite"): bonus, default as none
+        instructions (List[str]): page transfer, default as none
     """
 
     def __init__(self, width: int, height: int, title: str):
@@ -406,6 +409,26 @@ class MyGame(arcade.Window):
         return sorted_list
 
     @staticmethod
+    def insertion_stack(nums: List[int]) -> List[int]:
+        """ A helper function that sort the data in an ascending order
+
+       Args:
+           nums: The original data
+
+       Returns:
+           a sorted list in ascending order
+       """
+        left = []
+        right = []
+        for num in nums:
+            while left and left[-1] > num:
+                right.append(left.pop())
+            left.append(num)
+            while right:
+                left.append(right.pop())
+        return left
+
+    @staticmethod
     def sorted_data(prim_data: Dict) -> Dict:
         """ Sort the dictionary so that key (score) in descending order, value (time) in ascending order
 
@@ -417,8 +440,8 @@ class MyGame(arcade.Window):
             {30: [6, 5], 40: [8, 2]} -> {40: [2, 8], 30: [5, 6]}
         """
         final_d = {}
-        for score in MyGame.msort([int(s) for s in prim_data.keys()])[::-1]:
-            for time in MyGame.msort(prim_data[str(score)]):
+        for score in MyGame.insertion_stack([int(s) for s in prim_data.keys()])[::-1]:
+            for time in MyGame.insertion_stack(prim_data[str(score)]):
                 if score not in final_d:
                     final_d[score] = []
                 final_d[score].append(time)
@@ -489,7 +512,8 @@ class MyGame(arcade.Window):
                                       page_texture, 0)
         if self.current_state == INSTRUCTIONS_PAGE_0:
             page_texture = arcade.load_texture("images/background_new.png")
-            arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT//2, page_texture.width, page_texture.height, page_texture,
+            arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, page_texture.width,
+                                          page_texture.height, page_texture,
                                           0)
 
     # draw game over page
@@ -531,10 +555,10 @@ class MyGame(arcade.Window):
             None
         """
         # Draw background and boss for each level
-        texture_1 = arcade.load_texture("images/bg_"+str(level)+".jpg")
+        texture_1 = arcade.load_texture("images/bg_" + str(level) + ".jpg")
         arcade.draw_texture_rectangle(400, position_y_1, 800, 600, texture_1)
         arcade.draw_texture_rectangle(400, position_y_2, 800, 600, texture_1)
-        texture_0 = arcade.load_texture("images/boss_"+str(level)+".png")
+        texture_0 = arcade.load_texture("images/boss_" + str(level) + ".png")
 
         # draw images
         self.enemy_list.draw()
@@ -563,19 +587,24 @@ class MyGame(arcade.Window):
             if 0 < laser_effect < 7:
                 if 0 <= level <= 1:
                     arcade.draw_texture_rectangle(b.center_x, b.center_y - 380, 30, 600,
-                                                  arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
+                                                  arcade.load_texture(
+                                                      "images/bomb_laser" + str(laser_effect + 5) + ".png"))
 
                 if level == 2:
                     arcade.draw_texture_rectangle(b.center_x, b.center_y - 370, 30, 600,
-                                                  arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
+                                                  arcade.load_texture(
+                                                      "images/bomb_laser" + str(laser_effect + 5) + ".png"))
 
                 if 3 <= level <= 4:
                     arcade.draw_texture_rectangle(b.center_x - 40, b.center_y - 345, 30, 600,
-                                                  arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
+                                                  arcade.load_texture(
+                                                      "images/bomb_laser" + str(laser_effect + 5) + ".png"))
                     arcade.draw_texture_rectangle(b.center_x, b.center_y - 360, 30, 600,
-                                                  arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
+                                                  arcade.load_texture(
+                                                      "images/bomb_laser" + str(laser_effect + 5) + ".png"))
                     arcade.draw_texture_rectangle(b.center_x + 40, b.center_y - 345, 30, 600,
-                                                  arcade.load_texture("images/bomb_laser"+str(laser_effect+5)+".png"))
+                                                  arcade.load_texture(
+                                                      "images/bomb_laser" + str(laser_effect + 5) + ".png"))
 
         if self.boss:
             arcade.draw_lrtb_rectangle_outline(300, 500, 580, 560, arcade.color.BLACK, 2)
@@ -590,7 +619,6 @@ class MyGame(arcade.Window):
         if self.laser_player >= 1:
             for i in range(self.laser_player):
                 arcade.draw_texture_rectangle(760 - i * 50, 520, 50, 40, arcade.load_texture("images/missile_icon.png"))
-
 
     def draw_leaderboard(self) -> None:
         """ Draw a leader board using data from a .json file
@@ -698,7 +726,7 @@ class MyGame(arcade.Window):
             data = json.load(f)
             if str(Score) not in data.keys():
                 data[str(Score)] = []
-            data[str(Score)].append(self.frame_count//60)
+            data[str(Score)].append(self.frame_count // 60)
 
         with open("leaderboard.json", "w") as f:
             json.dump(data, f)
@@ -874,15 +902,15 @@ class MyGame(arcade.Window):
                         # randomly generate enemy planes of different levels
                         ranNum = random.randint(0, 1000)
                         if ranNum < 300:
-                            enemy = Enemy("images/plane_small.png", 0.85, level+2, 10, 4)
+                            enemy = Enemy("images/plane_small.png", 0.85, level + 2, 10, 4)
                         elif ranNum < 550:
-                            enemy = Enemy("images/enemy_2.png", 0.7, level+4, 15, 4)
+                            enemy = Enemy("images/enemy_2.png", 0.7, level + 4, 15, 4)
                         elif ranNum < 750:
-                            enemy = Enemy("images/enemy_1.png", 0.6, level+6, 50, 3)
+                            enemy = Enemy("images/enemy_1.png", 0.6, level + 6, 50, 3)
                         elif ranNum < 900:
-                            enemy = Enemy("images/boss0.png", 0.35, level+8, 100, 2)
+                            enemy = Enemy("images/boss0.png", 0.35, level + 8, 100, 2)
                         else:
-                            enemy = Enemy("images/enemy_3.png", 0.7, level+16, 200, 2)
+                            enemy = Enemy("images/enemy_3.png", 0.7, level + 16, 200, 2)
 
                         enemy.center_x = random.randrange(0, SCREEN_WIDTH)
                         enemy.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
@@ -897,11 +925,11 @@ class MyGame(arcade.Window):
                     prompt_time = self.frame_count
 
                     # update boss image based on game level
-                    enemy = Boss("images/boss_"+str(level)+".png",
-                                  0.8,
-                                  (level+1)*50,
-                                  (level**2+1)*500,
-                                  min(level+1.5, 3))
+                    enemy = Boss("images/boss_" + str(level) + ".png",
+                                 0.8,
+                                 (level + 1) * 50,
+                                 (level ** 2 + 1) * 500,
+                                 min(level + 1.5, 3))
 
                     enemy.center_x = random.randrange(0, SCREEN_WIDTH)
                     enemy.center_y = SCREEN_HEIGHT * 2
@@ -1067,8 +1095,8 @@ class MyGame(arcade.Window):
                                 bullet_1 = arcade.Sprite("images/boss_bullet.png", 0.5)
                                 bullet_2 = arcade.Sprite("images/boss_bullet.png", 0.5)
 
-                                dx = math.sin(n/2) * BULLET_SPEED * 1.5
-                                dy = math.cos(n/2+math.pi) * BULLET_SPEED * 1.5
+                                dx = math.sin(n / 2) * BULLET_SPEED * 1.5
+                                dy = math.cos(n / 2 + math.pi) * BULLET_SPEED * 1.5
 
                                 bullet_1.center_x = start_x
                                 bullet_1.center_y = start_y
@@ -1085,7 +1113,7 @@ class MyGame(arcade.Window):
                                 self.bullet_list.append(bullet_2)
 
                                 # recursive step
-                                add_bullet(n+1)
+                                add_bullet(n + 1)
 
                         add_bullet(0)
 
@@ -1098,26 +1126,25 @@ class MyGame(arcade.Window):
                         bullet.change_y = math.sin(angle) * BULLET_SPEED * 1.5
                         self.bullet_list.append(bullet)
 
-
                 # determine the shooting frequency of the player airplane
                 if self.frame_count % (15 - 2 * level) == 0:
 
                     if level == 0:
                         self.create_bullet("Bomb2", 0.85, self.player.center_x, self.player.center_y + 10, 0,
-                                      BULLET_SPEED * 3)
+                                           BULLET_SPEED * 3)
 
                     if level == 1:
                         self.create_bullet("Bomb2", 0.85, self.player.center_x - 15, self.player.center_y, 0,
-                                      BULLET_SPEED * 3)
+                                           BULLET_SPEED * 3)
                         self.create_bullet("Bomb2", 0.85, self.player.center_x + 15, self.player.center_y, 0,
-                                      BULLET_SPEED * 3)
+                                           BULLET_SPEED * 3)
 
                     if level == 2:
                         self.create_bullet("Bomb3", 0.55, self.player.center_x, self.player.center_y + 10, 0,
-                                      BULLET_SPEED * 3)
+                                           BULLET_SPEED * 3)
                     if level > 2:
                         self.create_bullet("Bomb5", 0.55, self.player.center_x, self.player.center_y, 0,
-                                      BULLET_SPEED * 4)
+                                           BULLET_SPEED * 4)
 
                 # determine the shooting frequency of the pet airplane based on the level
                 if self.frame_count % (60 - 2 * level) == 0:
@@ -1215,7 +1242,7 @@ class MyGame(arcade.Window):
                                 ans = []
                                 for i in range(len(s)):
                                     if s[i].ehp <= hp:
-                                        ans.append([s[i]] + track_targets(s[:i] + s[i+1:], hp - s[i].ehp))
+                                        ans.append([s[i]] + track_targets(s[:i] + s[i + 1:], hp - s[i].ehp))
 
                                 max_score = -1
                                 max_index = -1
@@ -1400,12 +1427,13 @@ class MyGame(arcade.Window):
                                     e = target
                                     break
                                 if e:
-                                    tot_dist = MyGame.get_distance(e.center_x, e.center_y - e.speed*4 - 400, x, y)
+                                    tot_dist = MyGame.get_distance(e.center_x, e.center_y - e.speed * 4 - 400, x, y)
                                     # dodge the laser from the boss while attacking
                                     if self.boss:
-                                        tot_dist = MyGame.get_distance(e.center_x + 100, e.center_y - e.speed * 4 - 400, x, y)
+                                        tot_dist = MyGame.get_distance(e.center_x + 100, e.center_y - e.speed * 4 - 400,
+                                                                       x, y)
                                 else:
-                                    tot_dist = MyGame.get_distance(SCREEN_WIDTH//2, 200, x, y)
+                                    tot_dist = MyGame.get_distance(SCREEN_WIDTH // 2, 200, x, y)
 
                                 # hp bonus is more important!
                                 e = None
@@ -1600,6 +1628,7 @@ down_pressed = False
 left_pressed = False
 right_pressed = False
 
+
 def main():
     """ Main method """
     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
@@ -1609,4 +1638,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
