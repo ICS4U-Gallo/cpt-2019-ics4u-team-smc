@@ -40,11 +40,10 @@ The compiled language for this program is python3 [这个程序的编译语言�
   When you use 1080P or 4K camra to take the user input,the Success rate is 98%, But when you useing 720P or 480p camra to take input. The Success rate is 20%. When the light is insufficient and the ambient light is very complicated, the recognition rate will decrease.
 Files in the folder: Main program test image folder(Have 5 test image inside) A few of image that program need. After you run first time have two image will be make. Do not worry about it! it's nomal and also this is a way you can check where the error come from. DO NOT DELETE THEM!!!!!! YOU ONLY NEED TO RUN THE vc_from Team SM.PY
 
-算法部分 functions： def take_picture(camra_choose) def count_main(letter) def identification() Def test() Def main()
+Algorithm functions： def take_picture(camra_choose) def count_main(letter) def identification() Def test() Def main()
 
-GUI 部分 functions： def zeropg() def firstpg() def secondpg() def campg(cram_choose)[这个为GUI和算法的端口] def fourthpg(answer)[这个为算法到GUI的输出端口]
+GUI functions： def zeropg() def firstpg() def secondpg() def campg(cram_choose)[这个为GUI和算法的端口] def fourthpg(answer)[这个为算法到GUI的输出端口]
 
-Acknowledgement：intel(Open CV) Github CSDN China 
 
 
 
