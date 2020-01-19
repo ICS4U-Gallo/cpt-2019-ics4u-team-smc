@@ -1388,7 +1388,7 @@ class MyGame(arcade.Window):
 
                         except:
                             self.player.center_x = 400
-                            self.player.center_y = -250
+                            self.player.center_y = 100
                         # print(self.player.center_x, self.player.center_y)
                     else:
                         print("face not detected")
@@ -1769,31 +1769,6 @@ class MyThread(threading.Thread):
         print("bs")
         Vision.Face_Detect()
 
-class My_secound_Thread(threading.Thread):
-    def run(self):
-        """
-        try:
-            with open("x.txt", 'r') as f:
-                contents = f.read()
-                print(contents)
-
-        except:
-            with open("xb.txt", 'r') as f:
-                contents = f.read()
-                print(contents)
-        """
-
-
-"""    
-
-    print ("Start main threading")
-    # 创建三个线程
-    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    window.setup()
-    arcade.run()
-    """
-
-
 def main():
     vision = MyThread()
     # 启动三个线程
@@ -1807,12 +1782,6 @@ def main():
     # 启动三个线程
     vision.join()
     print("End Main threading")
-
-# def main():
-#     """ Main method """
-#     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-#     window.setup()
-#     arcade.run()
 
 
 if __name__ == '__main__':
