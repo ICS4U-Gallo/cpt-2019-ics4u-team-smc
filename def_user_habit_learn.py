@@ -15,7 +15,7 @@ class UserHabitLearn:
     It even able to train the Vision class CNN network by its self.
     """
     database = {}
-    def __init__(self, name: str):
+    def __init__(self, name: str) ->None:
         """
          Initialize userhabitlearn class
         
@@ -44,6 +44,8 @@ class UserHabitLearn:
         """
         this is a sort function that use bubbles sort structure
         it sort a list of numbers and return a sorted list
+        Returns:
+            numbers:List[int]
         """
         for i in range(len(numbers)):
             for i in range(len(numbers)-1):
@@ -54,7 +56,7 @@ class UserHabitLearn:
         return numbers
 
 
-    def sort(self):
+    def sort(self)->None:
         """
          sort data autolly
          
@@ -62,6 +64,8 @@ class UserHabitLearn:
             x_contents:The x value read out from data base
             y_contents:The y value read out from data base
             database: This is a dictionary that storge data from the database
+        Returns:
+            None
         """
         print(type(self))
         x_value_list = self.database['x']
@@ -75,7 +79,7 @@ class UserHabitLearn:
     
     
     
-    def find_x_mode(self) -> int():
+    def find_x_mode(self) -> int:
         """
          findy mode number for y numbers
          
@@ -85,6 +89,8 @@ class UserHabitLearn:
             maximum: the maximum number in x value
             minimum: the minimum number in x value
             x_mode: a int that is the mode of x
+        Returns:
+            x_mode = mode of x (int)
         """
         print(self.database)
         x_value_list = self.database['x']
@@ -98,7 +104,7 @@ class UserHabitLearn:
         
         return x_mode
 
-    def find_y_mode(self) -> int():
+    def find_y_mode(self) -> int:
         """
          findy mode number for y numbers
          
@@ -108,6 +114,8 @@ class UserHabitLearn:
             maximum: the maximum number in y value
             minimum: the minimum number in y value
             x_mode: a int that is the mode of y
+        Returns:
+            y_mode = mode of y (int)
         """
         y_value_list = self.database["y"]
         maximum = y_value_list.index(min(y_value_list))
@@ -127,66 +135,78 @@ class Calc:
     set_a_b(): is the setter for to number that user want to process
     """
     # 初始化
-    def __init__(self, a, b):
+    def __init__(self, a, b)->None:
         """
          Initialize Calc class
         
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           None
         """
         self.a = a
         self.b = b
   
     # 重置值
-    def set_a_b(self, a, b):
+    def set_a_b(self, a, b)->None:
         """
          set a and b
         
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           None
         """
         self.a = a
         self.b = b
     
     # 加法
-    def __add(self) -> int():
+    def __add(self) -> int:
         """
         this is a add function that use for add a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           sum of a+b
         """
         return self.a + self.b
 
     # 减法
-    def __sub(self) -> int():
+    def __sub(self) -> int:
         """
         this is a subtrac function that use for subtrac a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           subtrac of a+b
         """
         return self.a - self.b
 
     # 乘法
-    def _mul(self) -> int():
+    def _mul(self) -> int:
         """
         this is a multiplication function that use for multipliy a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           multiplication of a+b
         """
         return self.a * self.b
 
     # 除法
-    def _div(self) -> int():
+    def _div(self) -> int:
         """
         this is a div function that use for divid a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           divid of a+b
         """
         # a / b 2和3版本的除法有稍许变化
         if self.b != 0:
@@ -195,40 +215,48 @@ class Calc:
             raise ('除数为0，无法计算！')
 
     # 加法
-    def get_adds(self) -> int():
+    def get_adds(self) -> int:
          """
         this is a getter function that get add a and b
         arg:
             a: a number use for peocess
-            b: aother number use for peocess
+            b: aother number use for peoces
+        Returns:
+           sum of a+b
         """
         return self.__add()
 
     # 减法
-    def get_subs(self) -> int():
+    def get_subs(self) -> int:
          """
         this is a getter function that get subs a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           subtrac of a+b
         """
         return self.__sub()
 
-    def get_muls(self) -> int():
+    def get_muls(self) -> int:
          """
         this is a getter function that get muls a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+            multiplication of a+b
         """
         return self._mul()
     
-    def get_divs(self) -> int():
+    def get_divs(self) -> int:
          """
         this is a getter function that get divs a and b
         arg:
             a: a number use for peocess
             b: aother number use for peocess
+        Returns:
+           divid of a+b: 
         """
         return self._div()
     
