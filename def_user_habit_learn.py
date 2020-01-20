@@ -47,14 +47,15 @@ class UserHabitLearn:
         Returns:
             numbers:List[int]
         """
-        for i in range(len(numbers)):
-            for i in range(len(numbers)-1):
-                if numbers[i] < numbers[i+1]:
-                    target = numbers[i]
+        for i,num in enumerate(numbers):
+            try:
+                if numbers[i+1] <num:
                     numbers[i] = numbers[i+1]
-                    numbers[i+1] = target
+                    numbers[i+1] = num
+                    bubble_sort(numbers)
+            except IndexError:
+                pass
         return numbers
-
 
     def sort(self)->None:
         """
