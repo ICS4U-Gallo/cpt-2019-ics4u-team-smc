@@ -1718,10 +1718,30 @@ class Communication:
 class Vision(Communication):
 
     def __init__(self, x: int, y: int):
+        """
+        Initialize Communication class
+        Args:
+            x_value: x value that read out from Vision
+            y_value: y value that read out from Vision
+        Return:
+            None
+        """
         super().__init__(x, y)
 
     @staticmethod
     def Face_Detect():
+    """
+        This is a vision function that use for
+        face detection
+        it trac your face and run CNN  
+        Args:
+        cap: camra
+        x = the x value your face on screen
+        y = the y value your face on screen
+        
+        Return:
+        None
+    """
         cap = cv2.VideoCapture(0)  # 捕获摄像头图像
 
         # 判断视频是否打开
@@ -1793,8 +1813,14 @@ class Vision(Communication):
 
 
 class MyThread(threading.Thread):
+    """
+    This is a class for Multithreading 
+    """
     def run(self):
-        print("bs")
+    """
+    This is a thread for Vision it start runing from there
+    """
+        print("Vision start")
         Vision.Face_Detect()
 
 

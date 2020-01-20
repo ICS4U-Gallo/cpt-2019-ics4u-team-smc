@@ -40,21 +40,22 @@ class UserHabitLearn:
         print(self.database)
 
 
-    def bubble_sort(numbers) -> List[int]:
+    def bubble_sort(numbers:List[int]) -> List[int]:
         """
         this is a sort function that use bubbles sort structure
         it sort a list of numbers and return a sorted list
         Returns:
             numbers:List[int]
         """
-        for i in range(len(numbers)):
-            for i in range(len(numbers)-1):
-                if numbers[i] < numbers[i+1]:
-                    target = numbers[i]
+        for i,num in enumerate(numbers):
+            try:
+                if numbers[i+1] <num:
                     numbers[i] = numbers[i+1]
-                    numbers[i+1] = target
+                    numbers[i+1] = num
+                    bubble_sort(numbers)
+            except IndexError:
+                pass
         return numbers
-
 
     def sort(self)->None:
         """
