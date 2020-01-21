@@ -1730,7 +1730,7 @@ class Vision(Communication):
 
     @staticmethod
     def Face_Detect():
-    """
+        """
         This is a vision function that use for
         face detection
         it trac your face and run CNN  
@@ -1741,7 +1741,7 @@ class Vision(Communication):
         
         Return:
         None
-    """
+        """
         cap = cv2.VideoCapture(0)  # 捕获摄像头图像
 
         # 判断视频是否打开
@@ -1817,9 +1817,7 @@ class MyThread(threading.Thread):
     This is a class for Multithreading 
     """
     def run(self):
-    """
-    This is a thread for Vision it start runing from there
-    """
+        """This is a thread for Vision it start runing from there """
         print("Vision start")
         Vision.Face_Detect()
 

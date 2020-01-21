@@ -319,7 +319,7 @@ class MyGame(arcade.Window):
         player ("Sprite"): player, default as none
         pet_list (List["Sprite"]): pets, default as none
         pet ("Sprite"): left pet, default as none
-        pet2: right pet, default as none
+        pet2 ("Sprite"): right pet, default as none
         assist ("Sprite"): missile, default as none
         bonus ("Sprite"): bonus, default as none
         instructions (List[str]): page transfer, default as none
@@ -513,8 +513,7 @@ class MyGame(arcade.Window):
         if self.current_state == INSTRUCTIONS_PAGE_0:
             page_texture = arcade.load_texture("images/background_new.png")
             arcade.draw_texture_rectangle(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, page_texture.width,
-                                          page_texture.height, page_texture,
-                                          0)
+                                          page_texture.height, page_texture, 0)
 
     # draw game over page
     def draw_game_over(self) -> None:
@@ -704,7 +703,7 @@ class MyGame(arcade.Window):
         self.assist = arcade.SpriteList()
         self.bonus = arcade.SpriteList()
 
-        # Add player ship
+        # Add player ship and pet
         self.player = arcade.Sprite("images/SeHero.png", 0.8)
         self.player.center_x = SCREEN_WIDTH // 2
         self.player.center_y = SCREEN_HEIGHT // 2
@@ -896,6 +895,7 @@ class MyGame(arcade.Window):
                     bonus_hp.center_y = random.randrange(SCREEN_HEIGHT, SCREEN_HEIGHT * 1.25)
                     self.bonus.append(bonus_hp)
 
+                # generate enemy airplanes every 2s
                 if self.frame_count % 120 == 0 and not self.boss and not 1 <= explode <= 4:
 
                     for _ in range(2 + level):
@@ -1226,7 +1226,7 @@ class MyGame(arcade.Window):
 
                         if sorted_enemy:
                             # recursion and backtracking
-                            def track_targets(s: List[Enemy], hp: float) -> List[Enemy]:
+                            def track_targets(enemies: List[Enemy], hp: float) -> List[Enemy]:
                                 """ Help the missile find the optimal target
 
                                 Args:
@@ -1237,12 +1237,12 @@ class MyGame(arcade.Window):
 
                                 """
 
-                                if not s or hp <= 0:
+                                if not enemies or hp <= 0:
                                     return []
                                 ans = []
-                                for i in range(len(s)):
-                                    if s[i].ehp <= hp:
-                                        ans.append([s[i]] + track_targets(s[:i] + s[i + 1:], hp - s[i].ehp))
+                                for i in range(len(enemies)):
+                                    if enemies[i].ehp <= hp:
+                                        ans.append([enemies[i]] + track_targets(enemies[:i] + enemies[i + 1:], hp - enemies[i].ehp))
 
                                 max_score = -1
                                 max_index = -1
