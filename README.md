@@ -15,16 +15,16 @@ OpenCV + NumPy + Recursion + Auto-Tracking Missile + AutoPilot (Heuristic)
 
 The compiled language for this program is python3
 
-  (Before you run our code Please install these libraries correctly. Otherwise there is a risk of a program crash. For the safety of you and others, please install these libraries correctly.)
+Before you run our code Please install these libraries correctly. Otherwise there is a risk of a program crash. For the safety of you and others, please install these libraries correctly.)
   
-  (Please download all the folders, the only way to start the program correctly)
+Please download all the folders, the only way to start the program correctly)
 
 ### User Instruction
 - When you use 1080P or 4K camra to take the user input,the Success rate is 98%, But when you useing 720P or 480p camra to take input. The Success rate is 20%. When the light is insufficient and the ambient light is very complicated, the recognition rate will decrease.
 - The first level is controlled by A.I
 - The second level requires you to use your face to control the airplane
-- You can either use keyboard or mouse to the remaining level
-- Two types of missile: One can the autotrack two enemy airplanes that have the largest ehp, the other can shoot the "optimal" airplane
+- You can either use keyboard or mouse to control the remaining level
+- Two types of missile: One can autotrack two enemy airplanes that have the largest ehp, the other can shoot the "optimal" airplane
 
 
 # CPT 2019-2020
